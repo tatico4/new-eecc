@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrador de Parser - Sistema Análisis Financiero</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .rule-card {
+            transition: all 0.3s ease;
+        }
+        .rule-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        .bank-tab {
+            transition: all 0.2s ease;
+        }
+        .bank-tab.active {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-lg border-b-2 border-blue-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-blue-600 text-white p-3 rounded-lg">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">🔧 Administrador de Parser</h1>
+                        <p class="text-gray-600">Sistema de Análisis Financiero - Configuración Avanzada</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                        👥 Vista Cliente
+                    </a>
+                    <div class="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm font-medium">
+                        🟢 Sistema Activo
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="bg-blue-100 p-3 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Reglas Activas</p>
+                        <p id="totalActiveRules" class="text-2xl font-bold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="bg-green-100 p-3 rounded-lg">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Bancos Configurados</p>
+                        <p id="totalBanks" class="text-2xl font-bold text-gray-900">1</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="bg-yellow-100 p-3 rounded-lg">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Efectividad</p>
+                        <p id="effectiveness" class="text-2xl font-bold text-gray-900">95.2%</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="bg-purple-100 p-3 rounded-lg">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Filtradas Hoy</p>
+                        <p id="filteredToday" class="text-2xl font-bold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Panel -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- Tabs -->
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-8 px-6">
+                    <button id="globalTab" class="bank-tab active py-4 px-1 border-b-2 border-blue-500 text-blue-600 font-medium text-sm">
+                        🌍 Reglas Globales
+                    </button>
+                    <button id="falabellaTab" class="bank-tab py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
+                        🏦 Banco Falabella
+                    </button>
+                    <button id="correctionsTab" class="bank-tab py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
+                        🔧 Correcciones
+                    </button>
+                    <button id="categoriesTab" class="bank-tab py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
+                        🏷️ Categorías
+                    </button>
+                    <button id="addBankTab" class="bank-tab py-4 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-600 font-medium text-sm">
+                        ➕ Agregar Banco
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Content -->
+            <div class="p-6">
+                <!-- Rules Section -->
+                <div id="rulesSection">
+                    <!-- Add Rule Section -->
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-8 border border-blue-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">➕ Agregar Nueva Regla</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Regla</label>
+                            <select id="newRuleType" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="contains">Contiene texto</option>
+                                <option value="starts">Comienza con</option>
+                                <option value="ends">Termina con</option>
+                                <option value="exact">Coincidencia exacta</option>
+                                <option value="regex">Expresión regular</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Texto/Patrón</label>
+                            <input type="text" id="newRuleText" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="CMR Puntos">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                            <input type="text" id="newRuleDescription" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Filtrar notificaciones CMR">
+                        </div>
+                        <div class="flex items-end">
+                            <button id="addRuleBtn" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                ✨ Crear Regla
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button id="testRuleBtn" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors text-sm mr-2">
+                            🧪 Probar Regla
+                        </button>
+                        <button id="importRulesBtn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm mr-2">
+                            📥 Importar
+                        </button>
+                        <button id="exportRulesBtn" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm">
+                            📤 Exportar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Rules List -->
+                <div>
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">📋 Reglas Configuradas</h3>
+                        <div class="text-sm text-gray-500">
+                            <span id="currentBankName">Reglas Globales</span> • <span id="ruleCount">0 reglas</span>
+                        </div>
+                    </div>
+
+                    <div id="rulesContainer" class="space-y-4">
+                        <div class="text-center py-12 text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            <p class="mt-4 text-lg font-medium">No hay reglas configuradas</p>
+                            <p class="mt-2">Agrega tu primera regla usando el formulario superior</p>
+                        </div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Corrections Section -->
+                <div id="correctionsSection" class="hidden">
+                    <!-- Add Correction Section -->
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 mb-8 border border-green-200">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">🔧 Agregar Nueva Corrección</h3>
+                        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Corrección</label>
+                                <select id="newCorrectionType" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                    <option value="exact_replace">Reemplazo exacto</option>
+                                    <option value="word_replace">Reemplazar palabra</option>
+                                    <option value="regex_replace">Expresión regular</option>
+                                    <option value="cleanup">Limpieza general</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Patrón Original</label>
+                                <input type="text" id="newCorrectionPattern" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="compra falabella plaza vespucio t">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Texto Corregido</label>
+                                <input type="text" id="newCorrectionReplacement" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="Compra Falabella Plaza Vespucio">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                                <input type="text" id="newCorrectionDescription" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="Limpiar nombre Falabella">
+                            </div>
+                            <div class="flex items-end">
+                                <button id="addCorrectionBtn" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                    ✨ Crear Corrección
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center">
+                            <input type="checkbox" id="caseInsensitive" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked>
+                            <label for="caseInsensitive" class="ml-2 block text-sm text-gray-700">
+                                Ignorar mayúsculas/minúsculas
+                            </label>
+                        </div>
+                        <div class="mt-4">
+                            <button id="testCorrectionBtn" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors text-sm mr-2">
+                                🧪 Probar Corrección
+                            </button>
+                            <button id="suggestCorrectionBtn" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm mr-2">
+                                🤖 Sugerir Automática
+                            </button>
+                            <button id="importCorrectionsBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm mr-2">
+                                📥 Importar
+                            </button>
+                            <button id="exportCorrectionsBtn" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm">
+                                📤 Exportar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Corrections List -->
+                    <div>
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900">🔧 Correcciones Configuradas</h3>
+                            <div class="text-sm text-gray-500">
+                                <span id="currentCorrectionBankName">Correcciones Globales</span> • <span id="correctionCount">0 correcciones</span>
+                            </div>
+                        </div>
+
+                        <div id="correctionsContainer" class="space-y-4">
+                            <div class="text-center py-12 text-gray-500">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <p class="mt-4 text-lg font-medium">No hay correcciones configuradas</p>
+                                <p class="mt-2">Agrega tu primera corrección usando el formulario superior</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Panel (Hidden by default) -->
+        <div id="testPanel" class="hidden mt-8 bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">🧪 Probar Regla</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Texto de Prueba</label>
+                    <textarea id="testText" class="w-full h-32 border border-gray-300 rounded-lg px-3 py-2 resize-none" placeholder="Pega aquí líneas para probar la regla..."></textarea>
+                    <button id="runTestBtn" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                        ▶️ Ejecutar Prueba
+                    </button>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Resultado</label>
+                    <div id="testResults" class="w-full h-32 border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 overflow-y-auto text-sm">
+                        Los resultados aparecerán aquí...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Correction Test Panel (Hidden by default) -->
+        <div id="correctionTestPanel" class="hidden mt-8 bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">🔧 Probar Corrección</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Descripción Original</label>
+                    <textarea id="correctionTestText" class="w-full h-32 border border-gray-300 rounded-lg px-3 py-2 resize-none" placeholder="compra falabella plaza vespucio t&#10;sodimac hc nunoa la rein&#10;Uber eats"></textarea>
+                    <button id="runCorrectionTestBtn" class="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                        🔧 Probar Correcciones
+                    </button>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Resultado Corregido</label>
+                    <div id="correctionTestResults" class="w-full h-32 border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 overflow-y-auto text-sm">
+                        Los resultados de las correcciones aparecerán aquí...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Content -->
+        <div id="categoriesContent" class="hidden">
+            <!-- Header -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">🏷️ Gestión de Categorías</h3>
+                        <p class="text-gray-600 mt-1">Administra categorías y keywords para clasificar transacciones automáticamente</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="saveChangesBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm font-medium">
+                            💾 Guardar Cambios
+                        </button>
+                        <button id="testCategorizationBtn" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm font-medium">
+                            🧪 Probar
+                        </button>
+                        <button id="trainBtn" class="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 text-sm font-medium">
+                            🎓 Entrenar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Categories List -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-semibold text-gray-900">📂 Categorías</h4>
+                        <button id="addCategoryBtn" class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 text-sm">
+                            ➕ Nueva Categoría
+                        </button>
+                    </div>
+
+                    <div id="categoriesList" class="space-y-3 max-h-96 overflow-y-auto">
+                        <!-- Categories will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Keywords Management -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-semibold text-gray-900">🔖 Keywords</h4>
+                        <div class="text-sm text-gray-500" id="selectedCategoryInfo">
+                            Selecciona una categoría
+                        </div>
+                    </div>
+
+                    <!-- Add Keyword Form -->
+                    <div class="mb-4 p-4 bg-gray-50 rounded-lg" id="addKeywordSection" style="display: none;">
+                        <div class="flex space-x-2">
+                            <input type="text" id="newKeywordInput" placeholder="Nuevo keyword..."
+                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <button id="addKeywordBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">
+                                Agregar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Keywords List -->
+                    <div id="keywordsList" class="max-h-80 overflow-y-auto">
+                        <div class="text-center py-8 text-gray-500">
+                            <span class="text-4xl">🔖</span>
+                            <p class="mt-2">Selecciona una categoría para ver sus keywords</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Section -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mt-6" id="testSection" style="display: none;">
+                <h4 class="text-lg font-semibold text-gray-900 mb-4">🧪 Probar Categorización</h4>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Descripción de Transacción</label>
+                        <textarea id="testTransactionText" class="w-full h-32 border border-gray-300 rounded-lg px-3 py-2 resize-none text-sm"
+                                  placeholder="Ejemplo:&#10;Compra Nacional LIGA CH CONTRA LA E LA&#10;Transf a Angeles Hernandez&#10;Cruzverde CV 9061"></textarea>
+                        <button id="runTestBtn" class="mt-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm">
+                            🧪 Categorizar
+                        </button>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Resultado</label>
+                        <div id="testResults" class="w-full h-32 border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 overflow-y-auto text-sm">
+                            Los resultados aparecerán aquí...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training Section -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mt-6" id="trainingSection" style="display: none;">
+                <h4 class="text-lg font-semibold text-gray-900 mb-4">🎓 Entrenar Categorización</h4>
+
+                <!-- Training Input -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Descripción de Transacción</label>
+                        <textarea id="trainingTransactionText" class="w-full h-24 border border-gray-300 rounded-lg px-3 py-2 resize-none text-sm"
+                                  placeholder="Ingresa la descripción de la transacción que quieres entrenar..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Análisis Automático</label>
+                        <div id="trainingAnalysis" class="w-full h-24 border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 overflow-y-auto text-sm">
+                            <p class="text-gray-500 text-sm">Ingresa una descripción de transacción para analizar</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Correction Form -->
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4" id="correctionForm" style="display: none;">
+                    <h5 class="text-md font-semibold text-amber-900 mb-3">🎯 Corregir Categorización</h5>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Categoría Correcta</label>
+                            <select id="trainingCorrectCategory" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                <option value="">-- Seleccionar categoría correcta --</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button id="correctCategorizationBtn" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">
+                                ✅ Corregir Categorización
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Training History -->
+                <div class="mt-6">
+                    <h5 class="text-md font-semibold text-gray-900 mb-3">📚 Historial de Entrenamiento</h5>
+                    <div id="trainingHistory" class="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                        <div class="text-center py-8 text-gray-500">
+                            <span class="text-3xl">📚</span>
+                            <p class="mt-2">No hay entrenamientos registrados</p>
+                            <p class="text-xs">Los entrenamientos aparecerán aquí conforme los realices</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Category Modal -->
+            <div id="categoryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+                <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900" id="modalTitle">Nueva Categoría</h3>
+                        <button id="closeCategoryModal" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form id="categoryForm">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                                <input type="text" id="categoryName" required
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                       placeholder="ej: Comida y Restaurantes">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                                <input type="text" id="categoryDescription"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                       placeholder="ej: Gastos en comida, restaurantes y delivery">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                                    <input type="color" id="categoryColor" value="#3b82f6"
+                                           class="w-full h-10 border border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Icono</label>
+                                    <input type="text" id="categoryIcon" maxlength="2"
+                                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-center"
+                                           placeholder="🍽️">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-3 mt-6">
+                            <button type="button" id="cancelCategoryBtn"
+                                    class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400">
+                                Cancelar
+                            </button>
+                            <button type="submit" id="saveCategoryBtn"
+                                    class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                Crear
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="src/services/SupabaseClient.js"></script>
+    <script src="src/core/RulesManager.js"></script>
+    <script src="src/categorization/categories.js"></script>
+    <script src="src/categorization/CategoryEngine.js"></script>
+    <script src="src/components/CategoryManager.js"></script>
+    <script src="src/components/AdminApp.js"></script>
+    <script>
+        // Inicializar la aplicación de administración
+        document.addEventListener('DOMContentLoaded', function() {
+            window.adminApp = new AdminApp();
+        });
+    </script>
+</body>
+</html>
