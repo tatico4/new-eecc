@@ -41,12 +41,7 @@ class AdminApp {
         document.getElementById('falabellaTab')?.addEventListener('click', () => this.switchBank('BancoFalabella'));
         document.getElementById('correctionsTab')?.addEventListener('click', () => this.switchToCorrections());
         document.getElementById('categoriesTab')?.addEventListener('click', () => this.switchToCategories());
-        const tooltipsTabBtn = document.getElementById('tooltipsTab');
-        console.log('🔧 Configurando listener para tooltipsTab:', !!tooltipsTabBtn);
-        tooltipsTabBtn?.addEventListener('click', () => {
-            console.log('🖱️ Click en pestaña Explicaciones detectado!');
-            this.switchToTooltips();
-        });
+        document.getElementById('tooltipsTab')?.addEventListener('click', () => this.switchToTooltips());
 
         // Formulario de nueva regla
         document.getElementById('addRuleBtn')?.addEventListener('click', () => this.addNewRule());
@@ -1500,79 +1495,49 @@ class AdminApp {
      * Cambia a la sección de tooltips/explicaciones
      */
     switchToTooltips() {
-        console.log('🚀 INICIO switchToTooltips()');
         this.currentView = 'tooltips';
 
         // Actualizar tabs activos
-        console.log('🎯 Actualizando tabs...');
         document.querySelectorAll('.bank-tab').forEach(tab => {
             tab.classList.remove('active', 'border-blue-500', 'text-blue-600');
             tab.classList.add('border-transparent', 'text-gray-500');
         });
 
         const tooltipsTab = document.getElementById('tooltipsTab');
-        console.log('🔍 tooltipsTab encontrado:', tooltipsTab);
         if (tooltipsTab) {
             tooltipsTab.classList.add('active', 'border-blue-500', 'text-blue-600');
             tooltipsTab.classList.remove('border-transparent', 'text-gray-500');
-            console.log('✅ Tab activado');
         }
 
         // Mostrar/ocultar secciones
-        console.log('👁️ Ocultando/mostrando secciones...');
-
-        const rulesSection = document.getElementById('rulesSection');
-        const correctionsSection = document.getElementById('correctionsSection');
-        const categoriesContent = document.getElementById('categoriesContent');
-        const tooltipsContent = document.getElementById('tooltipsContent');
-
-        console.log('🔍 Elementos encontrados:', {
-            rulesSection: !!rulesSection,
-            correctionsSection: !!correctionsSection,
-            categoriesContent: !!categoriesContent,
-            tooltipsContent: !!tooltipsContent
-        });
-
-        rulesSection?.classList.add('hidden');
-        correctionsSection?.classList.add('hidden');
-        categoriesContent?.classList.add('hidden');
-        tooltipsContent?.classList.remove('hidden');
-
-        console.log('👁️ Estado final tooltipsContent:', tooltipsContent?.className);
+        document.getElementById('rulesSection')?.classList.add('hidden');
+        document.getElementById('correctionsSection')?.classList.add('hidden');
+        document.getElementById('categoriesContent')?.classList.add('hidden');
+        document.getElementById('tooltipsContent')?.classList.remove('hidden');
 
         // Cargar tooltips existentes
-        console.log('📊 Cargando tooltips...');
         this.loadTooltips();
 
-        console.log(`✅ Cambiado a: Explicaciones`);
+        console.log(`🔄 Cambiado a: Explicaciones`);
     }
 
     /**
      * Carga explicaciones personalizadas
      */
     loadTooltips() {
-        console.log('📊 INICIO loadTooltips()');
         const saved = localStorage.getItem('financeAnalyzer_customExplanations') || '{}';
-        console.log('💾 Datos guardados:', saved);
         const tooltips = JSON.parse(saved);
-        console.log('📋 Tooltips parseados:', tooltips);
 
         this.displayTooltips(tooltips);
         this.updateTooltipCount(Object.keys(tooltips).length);
-        console.log('✅ loadTooltips completado');
     }
 
     /**
      * Muestra tooltips en la interfaz
      */
     displayTooltips(tooltips) {
-        console.log('🎨 INICIO displayTooltips(), tooltips:', tooltips);
         const container = document.getElementById('tooltipsContainer');
-        console.log('📦 Container encontrado:', !!container);
-        if (!container) {
-            console.error('❌ No se encontró tooltipsContainer');
-            return;
-        }
+        if (!container) return;
 
         const entries = Object.entries(tooltips);
 
