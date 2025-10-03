@@ -403,9 +403,6 @@ class ClientApp {
             // Cambiar a dashboard
             this.switchView('dashboard');
 
-            // Mostrar resumen
-            this.showProcessingSummary(parseResult, this.currentTransactions.length);
-
         } catch (error) {
             console.error('Error procesando archivo:', error);
             this.hideLoading();
@@ -447,26 +444,6 @@ class ClientApp {
         // TODO: Implementar modal de error más elegante
     }
 
-    /**
-     * Muestra resumen del procesamiento
-     */
-    showProcessingSummary(parseResult, categorizedCount) {
-        const summary = `
-            ✅ Archivo procesado exitosamente
-
-            📊 Resultados:
-            • Banco detectado: ${parseResult.bankName}
-            • Líneas procesadas: ${parseResult.totalLines}
-            • Transacciones extraídas: ${parseResult.successfullyParsed}
-            • Transacciones categorizadas: ${categorizedCount}
-            • Tasa de éxito: ${parseResult.successRate}%
-
-            🎯 Confianza del parser: ${parseResult.parserConfidence}%
-        `;
-
-        alert(summary);
-        // TODO: Implementar modal de resumen más elegante
-    }
 
     /**
      * Renderiza el dashboard
