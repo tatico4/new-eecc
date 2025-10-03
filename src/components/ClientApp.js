@@ -1480,26 +1480,61 @@ class ClientApp {
         const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
 
         const tableHtml = `
+            <div class="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div class="flex items-center space-x-2 text-sm text-blue-800">
+                    <span class="font-medium">💡 Tip:</span>
+                    <span>Pasa el mouse sobre las descripciones para ver más detalles.</span>
+                    <span class="text-xs text-blue-600">Los íconos especiales (🏛️🛡️🏦⚡⚠️🔄) indican transacciones que necesitan atención.</span>
+                </div>
+            </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Descripción
+                                <span class="ml-1 text-xs font-normal text-gray-400">(hover para detalles)</span>
+                            </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        ${paginatedTransactions.map(transaction => `
-                            <tr class="hover:bg-gray-50">
+                        ${paginatedTransactions.map((transaction, index) => {
+                            const isSpecial = this.isSpecialTransaction(transaction);
+                            const enhancedDesc = this.getEnhancedDescription(transaction);
+                            const explanation = isSpecial ? this.getTransactionExplanation(transaction) : '';
+                            const specialIcon = isSpecial ? this.getSpecialTransactionIcon(transaction) : '';
+                            const tooltipId = `tooltip-${index}`;
+
+                            return `
+                            <tr class="hover:bg-gray-50 relative">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     ${this.formatDisplayDate(transaction.date)}
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-900">
-                                    <div class="max-w-xs truncate" title="${transaction.description}">
-                                        ${transaction.description}
+                                <td class="px-6 py-4 text-sm text-gray-900 relative">
+                                    <div class="flex items-center space-x-2">
+                                        ${isSpecial ? `<span class="text-lg flex-shrink-0" title="Transacción especial">${specialIcon}</span>` : ''}
+                                        <div class="max-w-xs truncate cursor-help ${isSpecial ? 'font-medium' : ''}"
+                                             onmouseenter="this.querySelector('.tooltip').classList.remove('hidden')"
+                                             onmouseleave="this.querySelector('.tooltip').classList.add('hidden')">
+                                            ${enhancedDesc}
+                                            ${isSpecial ? `
+                                                <div class="tooltip hidden absolute z-50 bg-gray-800 text-white text-sm rounded-lg p-3 shadow-lg max-w-sm left-0 top-full mt-2 border border-gray-600">
+                                                    <div class="font-medium mb-1 text-yellow-300">${specialIcon} ${enhancedDesc}</div>
+                                                    <div class="text-gray-200 text-xs leading-relaxed">${explanation}</div>
+                                                    <div class="text-gray-400 text-xs mt-2">Descripción original: "${transaction.description}"</div>
+                                                    <div class="absolute -top-1 left-4 w-2 h-2 bg-gray-800 border-l border-t border-gray-600 transform rotate-45"></div>
+                                                </div>
+                                            ` : `
+                                                <div class="tooltip hidden absolute z-50 bg-gray-700 text-white text-sm rounded-lg p-2 shadow-lg max-w-xs left-0 top-full mt-2">
+                                                    ${transaction.description}
+                                                    <div class="absolute -top-1 left-4 w-2 h-2 bg-gray-700 transform rotate-45"></div>
+                                                </div>
+                                            `}
+                                        </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -1516,7 +1551,8 @@ class ClientApp {
                                     ${transaction.amount < 0 ? '💸 Gasto' : '💰 Ingreso'}
                                 </td>
                             </tr>
-                        `).join('')}
+                        `;
+                        }).join('')}
                     </tbody>
                 </table>
             </div>
@@ -1757,6 +1793,156 @@ class ClientApp {
             'Otros': '📦'
         };
         return icons[category] || '📦';
+    }
+
+    /**
+     * Detecta si una transacción es especial (impuestos, seguros, etc.) y necesita tooltip
+     */
+    isSpecialTransaction(transaction) {
+        const description = transaction.description.toLowerCase();
+        const specialPatterns = [
+            // Impuestos
+            /impuesto|tributario|iva|renta|sii|timbre|fiscal/,
+            // Seguros
+            /seguro|asegur|vida|salud|vehiculo|hogar|acc\.|accidente/,
+            // Comisiones bancarias
+            /comision|mantenci[oó]n|anual|mensual|cargo.*cuenta|admin/,
+            // Servicios básicos
+            /electric|gas|agua|telefon|internet|cable|tv/,
+            // Multas y penalizaciones
+            /multa|infraccion|penalizaci[oó]n|sobregiro|mora/,
+            // Transferencias especiales
+            /transferencia.*red|tef|pago.*servicio|pago.*impuesto/,
+            // Códigos bancarios comunes
+            /cargo.*automatico|debito.*automatico|pago.*pac|red.*bancos/
+        ];
+
+        return specialPatterns.some(pattern => pattern.test(description));
+    }
+
+    /**
+     * Obtiene descripción clara y amigable para una transacción
+     */
+    getEnhancedDescription(transaction) {
+        const original = transaction.description;
+        const lower = original.toLowerCase();
+
+        // Diccionario de mejoras de descripción
+        const enhancements = {
+            // Impuestos
+            'impuesto': 'Pago de impuestos',
+            'sii': 'Servicio de Impuestos Internos',
+            'iva': 'Impuesto al Valor Agregado',
+            'renta': 'Impuesto a la Renta',
+
+            // Seguros
+            'seguro vida': 'Seguro de Vida',
+            'seguro salud': 'Seguro de Salud',
+            'seguro vehiculo': 'Seguro Vehicular',
+            'seguro hogar': 'Seguro del Hogar',
+
+            // Comisiones bancarias
+            'comision': 'Comisión bancaria',
+            'mantencion': 'Mantención de cuenta',
+            'cargo cuenta': 'Cargo por mantención',
+            'admin': 'Cargo administrativo',
+
+            // Servicios básicos
+            'electric': 'Cuenta de electricidad',
+            'gas': 'Cuenta de gas',
+            'agua': 'Cuenta de agua',
+            'telefon': 'Cuenta de teléfono',
+            'internet': 'Cuenta de internet',
+
+            // Multas
+            'multa': 'Multa o infracción',
+            'sobregiro': 'Cargo por sobregiro',
+            'mora': 'Cargo por mora',
+
+            // Transferencias
+            'transferencia red': 'Transferencia entre bancos',
+            'tef': 'Transferencia electrónica',
+            'pago servicio': 'Pago de servicio',
+            'red bancos': 'Red de bancos'
+        };
+
+        // Buscar mejoras
+        let enhanced = original;
+        for (const [pattern, improvement] of Object.entries(enhancements)) {
+            if (lower.includes(pattern)) {
+                enhanced = improvement;
+                break;
+            }
+        }
+
+        return enhanced;
+    }
+
+    /**
+     * Obtiene explicación detallada para una transacción especial
+     */
+    getTransactionExplanation(transaction) {
+        const description = transaction.description.toLowerCase();
+
+        const explanations = {
+            // Impuestos
+            impuesto: "Este es un pago de impuestos. Los bancos pueden cobrar comisiones adicionales por este tipo de pagos.",
+            sii: "Pago al Servicio de Impuestos Internos. Verifica que el monto coincida con tu declaración.",
+            iva: "Pago de IVA (Impuesto al Valor Agregado). Común en empresas o trabajadores independientes.",
+            renta: "Pago de impuesto a la renta. Puede ser mensual (trabajadores independientes) o anual.",
+
+            // Seguros
+            seguro: "Pago de prima de seguro. Revisa que coincida con tu póliza contratada.",
+            vida: "Seguro de vida. Verifica que sea el monto correcto según tu plan.",
+            salud: "Seguro de salud complementario. Además de Fonasa o Isapre.",
+
+            // Comisiones
+            comision: "Comisión cobrada por el banco. Revisa si está justificada según tu plan de cuenta.",
+            mantencion: "Cargo por mantención de cuenta. Algunos bancos lo cobran mensual o anualmente.",
+            admin: "Cargo administrativo. Puede incluir costos de procesamiento o mantención.",
+
+            // Servicios básicos
+            electric: "Cuenta de electricidad. Compara con el consumo del mes anterior.",
+            gas: "Cuenta de gas. Puede variar según la temporada (más alto en invierno).",
+            agua: "Cuenta de agua. Revisa si hay aumentos inusuales que puedan indicar fugas.",
+            telefon: "Cuenta de teléfono fijo o móvil. Verifica si incluye servicios adicionales.",
+            internet: "Cuenta de internet o TV cable. Revisa si hay cargos por servicios no solicitados.",
+
+            // Multas y cargos
+            multa: "Multa o infracción. Puede incluir recargos por pago tardío.",
+            sobregiro: "Cargo por usar más dinero del disponible. Evítalo manteniendo saldo positivo.",
+            mora: "Cargo por pago tardío. Programa pagos automáticos para evitarlo.",
+
+            // Transferencias
+            transferencia: "Transferencia bancaria. Verifica el destinatario y el motivo.",
+            tef: "Transferencia electrónica de fondos. Revisa que sea una operación que realizaste.",
+            red: "Operación a través de la red bancaria. Puede tener comisiones asociadas."
+        };
+
+        // Encontrar explicación más específica
+        for (const [keyword, explanation] of Object.entries(explanations)) {
+            if (description.includes(keyword)) {
+                return explanation;
+            }
+        }
+
+        return "Transacción especial que puede tener condiciones particulares. Revisa los detalles con tu banco si tienes dudas.";
+    }
+
+    /**
+     * Obtiene el ícono identificador para transacciones especiales
+     */
+    getSpecialTransactionIcon(transaction) {
+        const description = transaction.description.toLowerCase();
+
+        if (/impuesto|tributario|sii|renta/.test(description)) return '🏛️';
+        if (/seguro|asegur/.test(description)) return '🛡️';
+        if (/comision|mantenci[oó]n|admin|cargo/.test(description)) return '🏦';
+        if (/electric|gas|agua|telefon|internet/.test(description)) return '⚡';
+        if (/multa|infraccion|mora|sobregiro/.test(description)) return '⚠️';
+        if (/transferencia|tef/.test(description)) return '🔄';
+
+        return 'ℹ️'; // Ícono genérico para información
     }
 
     /**
