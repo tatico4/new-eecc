@@ -130,6 +130,9 @@
                     <button id="categoriesTab" class="bank-tab py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
                         🏷️ Categorías
                     </button>
+                    <button id="tooltipsTab" class="bank-tab py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
+                        💡 Explicaciones
+                    </button>
                     <button id="addBankTab" class="bank-tab py-4 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-600 font-medium text-sm">
                         ➕ Agregar Banco
                     </button>
@@ -456,6 +459,100 @@
                             <span class="text-3xl">📚</span>
                             <p class="mt-2">No hay entrenamientos registrados</p>
                             <p class="text-xs">Los entrenamientos aparecerán aquí conforme los realices</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tooltips/Explanations Content -->
+            <div id="tooltipsContent" class="hidden">
+                <!-- Header -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">💡 Gestión de Explicaciones</h3>
+                            <p class="text-gray-600 mt-1">Configura explicaciones personalizadas para transacciones específicas que aparecerán en tooltips</p>
+                        </div>
+                        <div class="flex space-x-3">
+                            <button id="exportTooltipsBtn" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm font-medium">
+                                📤 Exportar
+                            </button>
+                            <button id="importTooltipsBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium">
+                                📥 Importar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Explanation Section -->
+                <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-6 mb-8 border border-yellow-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">➕ Agregar Nueva Explicación</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Patrón de Búsqueda</label>
+                                <input type="text" id="newTooltipPattern"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                                       placeholder="ej: comision mantencion">
+                                <p class="text-xs text-gray-500 mt-1">Texto que debe contener la descripción original (sin mayúsculas)</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Traducido</label>
+                                <input type="text" id="newTooltipName"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                                       placeholder="ej: Comisión por mantención de cuenta">
+                                <p class="text-xs text-gray-500 mt-1">Nombre claro y amigable que aparecerá en el tooltip</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Ícono</label>
+                                <select id="newTooltipIcon" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                                    <option value="🏛️">🏛️ Impuestos</option>
+                                    <option value="🛡️">🛡️ Seguros</option>
+                                    <option value="🏦">🏦 Comisiones bancarias</option>
+                                    <option value="⚡">⚡ Servicios básicos</option>
+                                    <option value="⚠️">⚠️ Multas y cargos</option>
+                                    <option value="🔄">🔄 Transferencias</option>
+                                    <option value="⭐">⭐ Personalizado</option>
+                                    <option value="ℹ️">ℹ️ Información general</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Explicación Detallada</label>
+                                <textarea id="newTooltipExplanation" rows="4"
+                                          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 resize-none"
+                                          placeholder="ej: Este es un cargo por mantención de cuenta. Algunos bancos lo cobran mensual o anualmente. Revisa si está justificado según tu plan de cuenta."></textarea>
+                                <p class="text-xs text-gray-500 mt-1">Explicación clara de qué es esta transacción y consejos útiles</p>
+                            </div>
+                            <div class="flex items-end space-x-3">
+                                <button id="addTooltipBtn" class="flex-1 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors font-medium">
+                                    ✨ Crear Explicación
+                                </button>
+                                <button id="testTooltipBtn" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                                    🧪 Probar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explanations List -->
+                <div>
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">💡 Explicaciones Configuradas</h3>
+                        <div class="text-sm text-gray-500">
+                            <span id="tooltipCount">0 explicaciones</span>
+                        </div>
+                    </div>
+
+                    <div id="tooltipsContainer" class="space-y-4">
+                        <div class="text-center py-12 text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                            <p class="mt-4 text-lg font-medium">No hay explicaciones configuradas</p>
+                            <p class="mt-2">Agrega tu primera explicación usando el formulario superior</p>
                         </div>
                     </div>
                 </div>

@@ -1517,20 +1517,20 @@ class ClientApp {
                                 <td class="px-6 py-4 text-sm text-gray-900 relative">
                                     <div class="flex items-center space-x-2">
                                         ${isSpecial ? `<span class="text-lg flex-shrink-0" title="Transacción especial">${specialIcon}</span>` : ''}
-                                        <div class="max-w-xs truncate cursor-help ${isSpecial ? 'font-medium' : ''}"
+                                        <div class="max-w-xs truncate cursor-help"
                                              onmouseenter="this.querySelector('.tooltip').classList.remove('hidden')"
                                              onmouseleave="this.querySelector('.tooltip').classList.add('hidden')">
-                                            ${enhancedDesc}
+                                            ${transaction.description}
                                             ${isSpecial ? `
                                                 <div class="tooltip hidden absolute z-50 bg-gray-800 text-white text-sm rounded-lg p-3 shadow-lg max-w-sm left-0 top-full mt-2 border border-gray-600">
                                                     <div class="font-medium mb-1 text-yellow-300">${specialIcon} ${enhancedDesc}</div>
                                                     <div class="text-gray-200 text-xs leading-relaxed">${explanation}</div>
-                                                    <div class="text-gray-400 text-xs mt-2">Descripción original: "${transaction.description}"</div>
+                                                    <div class="text-gray-400 text-xs mt-2">Original: "${transaction.description}"</div>
                                                     <div class="absolute -top-1 left-4 w-2 h-2 bg-gray-800 border-l border-t border-gray-600 transform rotate-45"></div>
                                                 </div>
                                             ` : `
                                                 <div class="tooltip hidden absolute z-50 bg-gray-700 text-white text-sm rounded-lg p-2 shadow-lg max-w-xs left-0 top-full mt-2">
-                                                    ${transaction.description}
+                                                    Descripción completa: ${transaction.description}
                                                     <div class="absolute -top-1 left-4 w-2 h-2 bg-gray-700 transform rotate-45"></div>
                                                 </div>
                                             `}
@@ -1796,10 +1796,41 @@ class ClientApp {
     }
 
     /**
+     * Carga explicaciones personalizadas desde localStorage
+     */
+    loadCustomExplanations() {
+        const saved = localStorage.getItem('financeAnalyzer_customExplanations');
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch (error) {
+                console.warn('Error cargando explicaciones personalizadas:', error);
+            }
+        }
+        return {};
+    }
+
+    /**
+     * Guarda explicaciones personalizadas en localStorage
+     */
+    saveCustomExplanations(explanations) {
+        localStorage.setItem('financeAnalyzer_customExplanations', JSON.stringify(explanations));
+    }
+
+    /**
      * Detecta si una transacción es especial (impuestos, seguros, etc.) y necesita tooltip
      */
     isSpecialTransaction(transaction) {
         const description = transaction.description.toLowerCase();
+
+        // Verificar explicaciones personalizadas primero
+        const customExplanations = this.loadCustomExplanations();
+        const hasCustom = Object.keys(customExplanations).some(pattern =>
+            description.includes(pattern.toLowerCase())
+        );
+
+        if (hasCustom) return true;
+
         const specialPatterns = [
             // Impuestos
             /impuesto|tributario|iva|renta|sii|timbre|fiscal/,
@@ -1827,7 +1858,15 @@ class ClientApp {
         const original = transaction.description;
         const lower = original.toLowerCase();
 
-        // Diccionario de mejoras de descripción
+        // Verificar explicaciones personalizadas primero
+        const customExplanations = this.loadCustomExplanations();
+        for (const [pattern, data] of Object.entries(customExplanations)) {
+            if (lower.includes(pattern.toLowerCase())) {
+                return data.translatedName || original;
+            }
+        }
+
+        // Diccionario de mejoras de descripción por defecto
         const enhancements = {
             // Impuestos
             'impuesto': 'Pago de impuestos',
@@ -1866,16 +1905,14 @@ class ClientApp {
             'red bancos': 'Red de bancos'
         };
 
-        // Buscar mejoras
-        let enhanced = original;
+        // Buscar mejoras por defecto
         for (const [pattern, improvement] of Object.entries(enhancements)) {
             if (lower.includes(pattern)) {
-                enhanced = improvement;
-                break;
+                return improvement;
             }
         }
 
-        return enhanced;
+        return original;
     }
 
     /**
@@ -1883,6 +1920,14 @@ class ClientApp {
      */
     getTransactionExplanation(transaction) {
         const description = transaction.description.toLowerCase();
+
+        // Verificar explicaciones personalizadas primero
+        const customExplanations = this.loadCustomExplanations();
+        for (const [pattern, data] of Object.entries(customExplanations)) {
+            if (description.includes(pattern.toLowerCase())) {
+                return data.explanation || "Transacción configurada personalmente.";
+            }
+        }
 
         const explanations = {
             // Impuestos
@@ -1934,6 +1979,14 @@ class ClientApp {
      */
     getSpecialTransactionIcon(transaction) {
         const description = transaction.description.toLowerCase();
+
+        // Verificar íconos personalizados primero
+        const customExplanations = this.loadCustomExplanations();
+        for (const [pattern, data] of Object.entries(customExplanations)) {
+            if (description.includes(pattern.toLowerCase())) {
+                return data.icon || '⭐';
+            }
+        }
 
         if (/impuesto|tributario|sii|renta/.test(description)) return '🏛️';
         if (/seguro|asegur/.test(description)) return '🛡️';

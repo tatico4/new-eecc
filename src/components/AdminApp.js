@@ -41,6 +41,7 @@ class AdminApp {
         document.getElementById('falabellaTab')?.addEventListener('click', () => this.switchBank('BancoFalabella'));
         document.getElementById('correctionsTab')?.addEventListener('click', () => this.switchToCorrections());
         document.getElementById('categoriesTab')?.addEventListener('click', () => this.switchToCategories());
+        document.getElementById('tooltipsTab')?.addEventListener('click', () => this.switchToTooltips());
 
         // Formulario de nueva regla
         document.getElementById('addRuleBtn')?.addEventListener('click', () => this.addNewRule());
@@ -69,6 +70,12 @@ class AdminApp {
         // Auto-generar descripción de corrección
         document.getElementById('newCorrectionPattern')?.addEventListener('input', () => this.updateCorrectionDescription());
         document.getElementById('newCorrectionReplacement')?.addEventListener('input', () => this.updateCorrectionDescription());
+
+        // Tooltips/Explicaciones
+        document.getElementById('addTooltipBtn')?.addEventListener('click', () => this.addNewTooltip());
+        document.getElementById('testTooltipBtn')?.addEventListener('click', () => this.testTooltip());
+        document.getElementById('exportTooltipsBtn')?.addEventListener('click', () => this.exportTooltips());
+        document.getElementById('importTooltipsBtn')?.addEventListener('click', () => this.importTooltips());
     }
 
     /**
@@ -1451,6 +1458,278 @@ class AdminApp {
         } catch (error) {
             console.error('❌ Error cargando productos:', error);
         }
+    }
+
+    /**
+     * Cambia a la sección de tooltips/explicaciones
+     */
+    switchToTooltips() {
+        this.currentView = 'tooltips';
+
+        // Actualizar tabs activos
+        document.querySelectorAll('.bank-tab').forEach(tab => {
+            tab.classList.remove('active', 'border-blue-500', 'text-blue-600');
+            tab.classList.add('border-transparent', 'text-gray-500');
+        });
+
+        const tooltipsTab = document.getElementById('tooltipsTab');
+        if (tooltipsTab) {
+            tooltipsTab.classList.add('active', 'border-blue-500', 'text-blue-600');
+            tooltipsTab.classList.remove('border-transparent', 'text-gray-500');
+        }
+
+        // Mostrar/ocultar secciones
+        document.getElementById('rulesSection')?.classList.add('hidden');
+        document.getElementById('correctionsSection')?.classList.add('hidden');
+        document.getElementById('categoriesContent')?.classList.add('hidden');
+        document.getElementById('tooltipsContent')?.classList.remove('hidden');
+
+        // Cargar tooltips existentes
+        this.loadTooltips();
+
+        console.log(`🔄 Cambiado a: Explicaciones`);
+    }
+
+    /**
+     * Carga explicaciones personalizadas
+     */
+    loadTooltips() {
+        const saved = localStorage.getItem('financeAnalyzer_customExplanations') || '{}';
+        const tooltips = JSON.parse(saved);
+
+        this.displayTooltips(tooltips);
+        this.updateTooltipCount(Object.keys(tooltips).length);
+    }
+
+    /**
+     * Muestra tooltips en la interfaz
+     */
+    displayTooltips(tooltips) {
+        const container = document.getElementById('tooltipsContainer');
+        if (!container) return;
+
+        const entries = Object.entries(tooltips);
+
+        if (entries.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-12 text-gray-500">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                    <p class="mt-4 text-lg font-medium">No hay explicaciones configuradas</p>
+                    <p class="mt-2">Agrega tu primera explicación usando el formulario superior</p>
+                </div>
+            `;
+            return;
+        }
+
+        const tooltipCards = entries.map(([pattern, data]) => `
+            <div class="rule-card bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="text-lg">${data.icon || 'ℹ️'}</span>
+                            <h4 class="font-medium text-gray-900">${data.translatedName || pattern}</h4>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-2">
+                            <span class="font-medium">Patrón:</span> "${pattern}"
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            ${data.explanation || 'Sin explicación'}
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2 ml-4">
+                        <button onclick="adminApp.editTooltip('${pattern}')"
+                                class="text-blue-600 hover:text-blue-800 text-sm">
+                            ✏️ Editar
+                        </button>
+                        <button onclick="adminApp.deleteTooltip('${pattern}')"
+                                class="text-red-600 hover:text-red-800 text-sm">
+                            🗑️ Eliminar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        container.innerHTML = tooltipCards;
+    }
+
+    /**
+     * Agrega nueva explicación
+     */
+    addNewTooltip() {
+        const pattern = document.getElementById('newTooltipPattern')?.value.trim();
+        const translatedName = document.getElementById('newTooltipName')?.value.trim();
+        const icon = document.getElementById('newTooltipIcon')?.value;
+        const explanation = document.getElementById('newTooltipExplanation')?.value.trim();
+
+        if (!pattern || !translatedName || !explanation) {
+            alert('Por favor, completa todos los campos obligatorios');
+            return;
+        }
+
+        // Cargar explicaciones existentes
+        const saved = localStorage.getItem('financeAnalyzer_customExplanations') || '{}';
+        const tooltips = JSON.parse(saved);
+
+        // Agregar nueva explicación
+        tooltips[pattern.toLowerCase()] = {
+            translatedName,
+            icon,
+            explanation
+        };
+
+        // Guardar
+        localStorage.setItem('financeAnalyzer_customExplanations', JSON.stringify(tooltips));
+
+        // Limpiar formulario
+        document.getElementById('newTooltipPattern').value = '';
+        document.getElementById('newTooltipName').value = '';
+        document.getElementById('newTooltipExplanation').value = '';
+        document.getElementById('newTooltipIcon').value = '🏦';
+
+        // Recargar lista
+        this.loadTooltips();
+
+        console.log('✅ Nueva explicación agregada:', pattern);
+    }
+
+    /**
+     * Elimina una explicación
+     */
+    deleteTooltip(pattern) {
+        if (!confirm(`¿Estás seguro de eliminar la explicación para "${pattern}"?`)) {
+            return;
+        }
+
+        const saved = localStorage.getItem('financeAnalyzer_customExplanations') || '{}';
+        const tooltips = JSON.parse(saved);
+
+        delete tooltips[pattern];
+
+        localStorage.setItem('financeAnalyzer_customExplanations', JSON.stringify(tooltips));
+        this.loadTooltips();
+
+        console.log('🗑️ Explicación eliminada:', pattern);
+    }
+
+    /**
+     * Edita una explicación existente
+     */
+    editTooltip(pattern) {
+        const saved = localStorage.getItem('financeAnalyzer_customExplanations') || '{}';
+        const tooltips = JSON.parse(saved);
+        const data = tooltips[pattern];
+
+        if (!data) return;
+
+        // Llenar formulario con datos existentes
+        document.getElementById('newTooltipPattern').value = pattern;
+        document.getElementById('newTooltipName').value = data.translatedName || '';
+        document.getElementById('newTooltipIcon').value = data.icon || '🏦';
+        document.getElementById('newTooltipExplanation').value = data.explanation || '';
+
+        // Eliminar la entrada existente para evitar duplicados
+        delete tooltips[pattern];
+        localStorage.setItem('financeAnalyzer_customExplanations', JSON.stringify(tooltips));
+        this.loadTooltips();
+    }
+
+    /**
+     * Actualiza contador de tooltips
+     */
+    updateTooltipCount(count) {
+        const countElement = document.getElementById('tooltipCount');
+        if (countElement) {
+            countElement.textContent = `${count} explicaciones`;
+        }
+    }
+
+    /**
+     * Prueba una explicación
+     */
+    testTooltip() {
+        const pattern = document.getElementById('newTooltipPattern')?.value.trim();
+        if (!pattern) {
+            alert('Ingresa un patrón para probar');
+            return;
+        }
+
+        const testDescriptions = [
+            'COMISION MANTENCION CTA CTE',
+            'SEGURO VIDA DESGRAVAMEN',
+            'PAGO IMPUESTO SII RENTA',
+            'TRANSFERENCIA RED BANCOS',
+            'compra falabella plaza'
+        ];
+
+        const matches = testDescriptions.filter(desc =>
+            desc.toLowerCase().includes(pattern.toLowerCase())
+        );
+
+        if (matches.length > 0) {
+            alert(`✅ El patrón "${pattern}" coincide con:\n${matches.join('\n')}`);
+        } else {
+            alert(`❌ El patrón "${pattern}" no coincide con ninguna descripción de prueba`);
+        }
+    }
+
+    /**
+     * Exporta explicaciones
+     */
+    exportTooltips() {
+        const saved = localStorage.getItem('financeAnalyzer_customExplanations') || '{}';
+        const tooltips = JSON.parse(saved);
+
+        const dataStr = JSON.stringify(tooltips, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = 'explicaciones_transacciones.json';
+        link.click();
+
+        console.log('📤 Explicaciones exportadas');
+    }
+
+    /**
+     * Importa explicaciones
+     */
+    importTooltips() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importedTooltips = JSON.parse(event.target.result);
+
+                    // Validar estructura
+                    for (const [pattern, data] of Object.entries(importedTooltips)) {
+                        if (!data.translatedName && !data.explanation) {
+                            throw new Error(`Estructura inválida para: ${pattern}`);
+                        }
+                    }
+
+                    // Guardar
+                    localStorage.setItem('financeAnalyzer_customExplanations', JSON.stringify(importedTooltips));
+                    this.loadTooltips();
+
+                    alert(`✅ Se importaron ${Object.keys(importedTooltips).length} explicaciones`);
+                } catch (error) {
+                    alert(`❌ Error importando archivo: ${error.message}`);
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        input.click();
     }
 
     /**
