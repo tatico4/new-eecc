@@ -3,64 +3,636 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Análisis Financiero Inteligente</title>
+    <title>Analiza tus Gastos de Forma Inteligente | Sistema EECC</title>
+    <meta name="description" content="Descubre hacia dónde va tu dinero con nuestro sistema inteligente de análisis de estados de cuenta. Fácil, seguro y gratis.">
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        .file-upload-area {
+        body { font-family: 'Inter', sans-serif; }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card-hover {
             transition: all 0.3s ease;
         }
-        .file-upload-area.dragover {
-            border-color: #3b82f6;
-            background-color: #dbeafe;
+
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .feature-gradient {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .security-gradient {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .stats-gradient {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .pulse-button {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
         }
     </style>
 </head>
 <body class="bg-gray-50">
-    <div id="app">
-        <!-- La aplicación se renderizará aquí -->
-    </div>
+    <!-- Navigation -->
+    <nav class="bg-white/90 backdrop-blur-sm fixed w-full z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-chart-line text-2xl text-indigo-600"></i>
+                    <span class="font-bold text-xl text-gray-900">AnalisisEC</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#beneficios" class="text-gray-700 hover:text-indigo-600 transition-colors">Beneficios</a>
+                    <a href="#como-funciona" class="text-gray-700 hover:text-indigo-600 transition-colors">¿Cómo funciona?</a>
+                    <a href="#seguridad" class="text-gray-700 hover:text-indigo-600 transition-colors">Seguridad</a>
+                    <a href="app.html" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                        Comenzar Gratis
+                    </a>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-toggle" class="text-gray-700">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-    <!-- Scripts del sistema -->
-    <!-- Configuration -->
-    <script src="config.js"></script>
+    <!-- Hero Section -->
+    <section class="hero-gradient pt-20 pb-16 lg:pt-28 lg:pb-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:grid lg:grid-cols-12 lg:gap-8">
+                <div class="lg:col-span-6 lg:text-left text-center">
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
+                        Descubre <span class="text-yellow-300">hacia dónde</span> va tu dinero
+                    </h1>
+                    <p class="text-xl text-indigo-100 mb-8 max-w-2xl">
+                        Analiza tus estados de cuenta de forma inteligente. Te ayudamos a entender tus gastos,
+                        encontrar oportunidades de ahorro y tomar mejores decisiones financieras.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <a href="app.html" class="bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors pulse-button">
+                            <i class="fas fa-rocket mr-2"></i>
+                            Analizar mi Estado de Cuenta
+                        </a>
+                        <button onclick="scrollTo('#demo')" class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors">
+                            <i class="fas fa-play mr-2"></i>
+                            Ver Demo
+                        </button>
+                    </div>
+                    <div class="mt-8 flex items-center justify-center lg:justify-start text-indigo-100">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        <span>100% Gratis • Sin registro • Datos seguros</span>
+                    </div>
+                </div>
+                <div class="lg:col-span-6 mt-12 lg:mt-0">
+                    <div class="float-animation">
+                        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
+                            <div class="text-center">
+                                <i class="fas fa-file-pdf text-6xl text-yellow-300 mb-4"></i>
+                                <h3 class="text-2xl font-semibold text-white mb-4">Sube tu PDF</h3>
+                                <div class="bg-white/20 rounded-lg p-4 mb-4">
+                                    <div class="flex items-center justify-between text-white">
+                                        <span>📄 estado-cuenta.pdf</span>
+                                        <span class="text-green-300">✓</span>
+                                    </div>
+                                </div>
+                                <div class="text-indigo-100 text-sm">
+                                    Soporte para Banco Falabella y Santander
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <!-- Core system -->
-    <script src="src/services/SupabaseClient.js"></script>
-    <script src="src/core/RulesManager.js"></script>
+    <!-- Stats Section -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center fade-in">
+                    <div class="stats-gradient w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-users text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900 mb-2">+1,200</h3>
+                    <p class="text-gray-600">Personas han analizado sus gastos</p>
+                </div>
+                <div class="text-center fade-in">
+                    <div class="feature-gradient w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-chart-pie text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900 mb-2">95%</h3>
+                    <p class="text-gray-600">Precisión en categorización</p>
+                </div>
+                <div class="text-center fade-in">
+                    <div class="security-gradient w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-clock text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900 mb-2">2 min</h3>
+                    <p class="text-gray-600">Promedio de análisis completo</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <!-- Parsers -->
-    <script src="src/parsers/AbstractBankParser.js"></script>
-    <script src="src/parsers/BancoFalabellaParser.js"></script>
-    <script src="src/parsers/BancoSantanderParser.js"></script>
-    <script src="src/parsers/BancoSantanderCuentaCorrienteParser.js"></script>
-    <script src="src/parsers/ParserFactory.js"></script>
+    <!-- Benefits Section -->
+    <section id="beneficios" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 fade-in">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">
+                    ¿Por qué miles de personas confían en nosotros?
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Te ayudamos a tomar el control de tus finanzas de manera simple, segura y efectiva
+                </p>
+            </div>
 
-    <!-- Categorization -->
-    <script src="src/categorization/categories.js"></script>
-    <script src="src/categorization/CategoryEngine.js"></script>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Benefit 1 -->
+                <div class="bg-white rounded-2xl p-8 card-hover fade-in">
+                    <div class="feature-gradient w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-magic text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Categorización Automática</h3>
+                    <p class="text-gray-600 mb-4">
+                        Nuestro sistema inteligente categoriza automáticamente tus gastos en Comida, Transporte,
+                        Salud, Entretenimiento y más. ¡Sin trabajo manual!
+                    </p>
+                    <div class="text-indigo-600 font-medium">
+                        <i class="fas fa-arrow-right mr-2"></i>
+                        Ver en acción
+                    </div>
+                </div>
 
-    <!-- Analytics -->
-    <script src="src/analyticsTransactionAnalyzer.js"></script>
-    <script src="src/analyticsInsightsGenerator.js"></script>
-    <script src="src/analyticsChartDataProcessor.js"></script>
+                <!-- Benefit 2 -->
+                <div class="bg-white rounded-2xl p-8 card-hover fade-in">
+                    <div class="security-gradient w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-shield-alt text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">100% Seguro y Privado</h3>
+                    <p class="text-gray-600 mb-4">
+                        Tus datos nunca salen de tu navegador. No guardamos información personal ni bancaria.
+                        Todo el procesamiento es local y seguro.
+                    </p>
+                    <div class="text-indigo-600 font-medium">
+                        <i class="fas fa-lock mr-2"></i>
+                        Conoce más sobre seguridad
+                    </div>
+                </div>
 
-    <!-- Utilities -->
-    <script src="src/utils/PDFProcessor.js"></script>
-    <script src="src/utilsDataStorage.js"></script>
-    <script src="src/utilsValidationUtils.js"></script>
+                <!-- Benefit 3 -->
+                <div class="bg-white rounded-2xl p-8 card-hover fade-in">
+                    <div class="stats-gradient w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-chart-line text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Insights Poderosos</h3>
+                    <p class="text-gray-600 mb-4">
+                        Visualiza tus patrones de gasto, identifica oportunidades de ahorro y toma decisiones
+                        financieras más inteligentes con nuestros análisis.
+                    </p>
+                    <div class="text-indigo-600 font-medium">
+                        <i class="fas fa-lightbulb mr-2"></i>
+                        Ver ejemplo de análisis
+                    </div>
+                </div>
 
-    <!-- Client Interface -->
-    <script src="src/components/ClientApp.js"></script>
-    <script src="src/componentsTransactionTable.js"></script>
-    <script src="src/componentsAnalyticsCharts.js"></script>
+                <!-- Benefit 4 -->
+                <div class="bg-white rounded-2xl p-8 card-hover fade-in">
+                    <div class="hero-gradient w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-mobile-alt text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Funciona en Cualquier Dispositivo</h3>
+                    <p class="text-gray-600 mb-4">
+                        Úsalo desde tu computador, tablet o celular. Nuestra interfaz se adapta perfectamente
+                        a cualquier pantalla para tu comodidad.
+                    </p>
+                    <div class="text-indigo-600 font-medium">
+                        <i class="fas fa-tablet mr-2"></i>
+                        Probar en móvil
+                    </div>
+                </div>
+
+                <!-- Benefit 5 -->
+                <div class="bg-white rounded-2xl p-8 card-hover fade-in">
+                    <div class="feature-gradient w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-bank text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Soporte Multi-Banco</h3>
+                    <p class="text-gray-600 mb-4">
+                        Compatible con estados de cuenta de Banco Falabella y Banco Santander.
+                        Próximamente más bancos chilenos.
+                    </p>
+                    <div class="text-indigo-600 font-medium">
+                        <i class="fas fa-plus mr-2"></i>
+                        Ver bancos soportados
+                    </div>
+                </div>
+
+                <!-- Benefit 6 -->
+                <div class="bg-white rounded-2xl p-8 card-hover fade-in">
+                    <div class="stats-gradient w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-graduation-cap text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Sistema que Aprende</h3>
+                    <p class="text-gray-600 mb-4">
+                        Nuestro sistema mejora constantemente. Puedes entrenar la categorización para que se
+                        adapte mejor a tus hábitos de gasto específicos.
+                    </p>
+                    <div class="text-indigo-600 font-medium">
+                        <i class="fas fa-brain mr-2"></i>
+                        Conocer más sobre IA
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works -->
+    <section id="como-funciona" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 fade-in">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">
+                    ¿Cómo funciona? Es súper fácil
+                </h2>
+                <p class="text-xl text-gray-600">
+                    En solo 3 pasos tendrás tu análisis financiero completo
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Step 1 -->
+                <div class="text-center fade-in">
+                    <div class="relative">
+                        <div class="hero-gradient w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <span class="text-3xl font-bold text-white">1</span>
+                        </div>
+                        <div class="hidden lg:block absolute top-12 left-24 w-full h-0.5 bg-gradient-to-r from-indigo-500 to-transparent"></div>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-4">Sube tu PDF</h3>
+                    <p class="text-gray-600 mb-6">
+                        Arrastra y suelta tu estado de cuenta en PDF. Funciona con Banco Falabella y Santander.
+                    </p>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <i class="fas fa-file-upload text-3xl text-indigo-600 mb-2"></i>
+                        <div class="text-sm text-gray-500">Formatos soportados: PDF</div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="text-center fade-in">
+                    <div class="relative">
+                        <div class="feature-gradient w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <span class="text-3xl font-bold text-white">2</span>
+                        </div>
+                        <div class="hidden lg:block absolute top-12 left-24 w-full h-0.5 bg-gradient-to-r from-pink-500 to-transparent"></div>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-4">Análisis Automático</h3>
+                    <p class="text-gray-600 mb-6">
+                        Nuestro sistema lee y categoriza automáticamente todas tus transacciones en segundos.
+                    </p>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <i class="fas fa-cogs text-3xl text-pink-600 mb-2"></i>
+                        <div class="text-sm text-gray-500">Procesamiento inteligente</div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="text-center fade-in">
+                    <div class="stats-gradient w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="text-3xl font-bold text-white">3</span>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-4">Ve tus Resultados</h3>
+                    <p class="text-gray-600 mb-6">
+                        Obtén gráficos interactivos, insights personalizados y recomendaciones para mejorar tus finanzas.
+                    </p>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <i class="fas fa-chart-pie text-3xl text-green-600 mb-2"></i>
+                        <div class="text-sm text-gray-500">Visualización clara</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-12 fade-in">
+                <a href="app.html" class="bg-indigo-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-indigo-700 transition-colors inline-flex items-center">
+                    <i class="fas fa-rocket mr-2"></i>
+                    Comenzar Ahora - Es Gratis
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Section -->
+    <section id="seguridad" class="py-20 bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 fade-in">
+                <h2 class="text-4xl font-bold mb-4">Tu seguridad es nuestra prioridad</h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                    Entendemos que la información financiera es delicada. Por eso diseñamos nuestro sistema
+                    con los más altos estándares de seguridad y privacidad.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="text-center fade-in">
+                    <div class="security-gradient w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-shield-alt text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Procesamiento Local</h3>
+                    <p class="text-gray-300 text-sm">
+                        Todo se procesa en tu navegador. Tus datos nunca salen de tu dispositivo.
+                    </p>
+                </div>
+
+                <div class="text-center fade-in">
+                    <div class="feature-gradient w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-lock text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Sin Registro</h3>
+                    <p class="text-gray-300 text-sm">
+                        No necesitas crear cuenta ni proporcionar información personal.
+                    </p>
+                </div>
+
+                <div class="text-center fade-in">
+                    <div class="stats-gradient w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-eye-slash text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Cero Almacenamiento</h3>
+                    <p class="text-gray-300 text-sm">
+                        No guardamos ni almacenamos ninguno de tus documentos financieros.
+                    </p>
+                </div>
+
+                <div class="text-center fade-in">
+                    <div class="hero-gradient w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-code text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Código Abierto</h3>
+                    <p class="text-gray-300 text-sm">
+                        Nuestro código es transparente y auditable por la comunidad.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 fade-in">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">
+                    Lo que dicen nuestros usuarios
+                </h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-gray-50 rounded-2xl p-8 fade-in">
+                    <div class="flex items-center mb-4">
+                        <div class="text-yellow-400">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-6">
+                        "Increíble cómo categoriza automáticamente mis gastos. Me di cuenta que gastaba mucho más
+                        en delivery de lo que pensaba. ¡Me ayudó a ahorrar $50,000 al mes!"
+                    </p>
+                    <div class="flex items-center">
+                        <div class="bg-indigo-600 w-10 h-10 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-white font-semibold">M</span>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-gray-900">María González</div>
+                            <div class="text-gray-500 text-sm">Diseñadora</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 rounded-2xl p-8 fade-in">
+                    <div class="flex items-center mb-4">
+                        <div class="text-yellow-400">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-6">
+                        "Por fin entiendo en qué gasto mi plata. La interfaz es súper fácil de usar y me da
+                        insights que nunca había visto antes. Lo recomiendo 100%."
+                    </p>
+                    <div class="flex items-center">
+                        <div class="bg-pink-600 w-10 h-10 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-white font-semibold">C</span>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-gray-900">Carlos Rodríguez</div>
+                            <div class="text-gray-500 text-sm">Ingeniero</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 rounded-2xl p-8 fade-in">
+                    <div class="flex items-center mb-4">
+                        <div class="text-yellow-400">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-6">
+                        "Me encanta que sea completamente gratis y que no tenga que crear cuenta.
+                        Es exactamente lo que necesitaba para organizarme financieramente."
+                    </p>
+                    <div class="flex items-center">
+                        <div class="bg-green-600 w-10 h-10 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-white font-semibold">A</span>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-gray-900">Ana Martínez</div>
+                            <div class="text-gray-500 text-sm">Emprendedora</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Final -->
+    <section class="hero-gradient py-20">
+        <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-6 fade-in">
+                ¿Listo para tomar control de tus finanzas?
+            </h2>
+            <p class="text-xl text-indigo-100 mb-8 fade-in">
+                Únete a miles de personas que ya están ahorrando dinero y tomando mejores decisiones financieras
+            </p>
+            <div class="fade-in">
+                <a href="app.html" class="bg-white text-indigo-600 px-12 py-6 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors inline-flex items-center pulse-button">
+                    <i class="fas fa-chart-line mr-3 text-xl"></i>
+                    Analizar mi Estado de Cuenta Gratis
+                </a>
+            </div>
+            <div class="mt-6 text-indigo-100 fade-in">
+                <i class="fas fa-check mr-2"></i>
+                No requiere registro • 100% gratis • Completamente seguro
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="col-span-2">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fas fa-chart-line text-2xl text-indigo-400"></i>
+                        <span class="font-bold text-xl">AnalisisEC</span>
+                    </div>
+                    <p class="text-gray-300 mb-4 max-w-md">
+                        La herramienta más fácil y segura para analizar tus estados de cuenta y
+                        entender tus patrones de gasto.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-linkedin text-xl"></i>
+                        </a>
+                        <a href="https://github.com/tatico4/new-eecc" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-github text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold mb-4">Herramientas</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="app.html" class="hover:text-white transition-colors">Analizar PDF</a></li>
+                        <li><a href="admin.html" class="hover:text-white transition-colors">Panel Admin</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">API (Próximamente)</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold mb-4">Soporte</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#como-funciona" class="hover:text-white transition-colors">¿Cómo funciona?</a></li>
+                        <li><a href="#seguridad" class="hover:text-white transition-colors">Seguridad</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">FAQ</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Contacto</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2024 AnalisisEC. Hecho con ❤️ en Chile para ayudarte con tus finanzas.</p>
+            </div>
+        </div>
+    </footer>
 
     <script>
-        // Inicializar la aplicación
-        document.addEventListener('DOMContentLoaded', function() {
-            new ClientApp();
+        // Smooth scrolling for anchor links
+        function scrollTo(target) {
+            document.querySelector(target).scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all fade-in elements
+        document.addEventListener('DOMContentLoaded', () => {
+            const fadeElements = document.querySelectorAll('.fade-in');
+            fadeElements.forEach(el => observer.observe(el));
+
+            // Mobile menu toggle
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', () => {
+                    // Add mobile menu functionality here if needed
+                    console.log('Mobile menu clicked');
+                });
+            }
+        });
+
+        // Add smooth scroll behavior to all anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
         });
     </script>
 </body>

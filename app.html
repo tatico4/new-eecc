@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizar Estado de Cuenta | AnalisisEC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .file-upload-area {
+            transition: all 0.3s ease;
+        }
+        .file-upload-area.dragover {
+            border-color: #3b82f6;
+            background-color: #dbeafe;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="index.html" class="flex items-center space-x-2">
+                    <i class="fas fa-chart-line text-2xl text-indigo-600"></i>
+                    <span class="font-bold text-xl text-gray-900">AnalisisEC</span>
+                </a>
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="text-gray-700 hover:text-indigo-600 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Volver al Inicio
+                    </a>
+                    <a href="admin.html" class="text-gray-700 hover:text-indigo-600 transition-colors">
+                        <i class="fas fa-cog mr-2"></i>Admin
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="app" class="pt-4">
+        <!-- La aplicación se renderizará aquí -->
+    </div>
+
+    <!-- Scripts del sistema -->
+    <!-- Configuration -->
+    <script src="config.js"></script>
+
+    <!-- Core system -->
+    <script src="src/services/SupabaseClient.js"></script>
+    <script src="src/core/RulesManager.js"></script>
+
+    <!-- Parsers -->
+    <script src="src/parsers/AbstractBankParser.js"></script>
+    <script src="src/parsers/BancoFalabellaParser.js"></script>
+    <script src="src/parsers/BancoSantanderParser.js"></script>
+    <script src="src/parsers/BancoSantanderCuentaCorrienteParser.js"></script>
+    <script src="src/parsers/ParserFactory.js"></script>
+
+    <!-- Categorization -->
+    <script src="src/categorization/categories.js"></script>
+    <script src="src/categorization/CategoryEngine.js"></script>
+
+    <!-- Analytics -->
+    <script src="src/analyticsTransactionAnalyzer.js"></script>
+    <script src="src/analyticsInsightsGenerator.js"></script>
+    <script src="src/analyticsChartDataProcessor.js"></script>
+
+    <!-- Utilities -->
+    <script src="src/utils/PDFProcessor.js"></script>
+    <script src="src/utilsDataStorage.js"></script>
+    <script src="src/utilsValidationUtils.js"></script>
+
+    <!-- Client Interface -->
+    <script src="src/components/ClientApp.js"></script>
+    <script src="src/componentsTransactionTable.js"></script>
+    <script src="src/componentsAnalyticsCharts.js"></script>
+
+    <script>
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            new ClientApp();
+        });
+    </script>
+</body>
+</html>
