@@ -104,7 +104,13 @@ class AdminApp {
         document.getElementById('rulesSection').classList.remove('hidden');
         document.getElementById('correctionsSection').classList.add('hidden');
         document.getElementById('categoriesContent')?.classList.add('hidden');
-        document.getElementById('tooltipsContent')?.classList.add('hidden');
+
+        // Forzar ocultar tooltipsContent
+        const tooltipsContent = document.getElementById('tooltipsContent');
+        if (tooltipsContent) {
+            tooltipsContent.classList.add('hidden');
+            tooltipsContent.style.display = 'none';
+        }
 
         // Actualizar título
         const bankDisplayName = bankName === 'global' ? 'Reglas Globales' : bankName;
@@ -138,7 +144,13 @@ class AdminApp {
         document.getElementById('rulesSection').classList.add('hidden');
         document.getElementById('correctionsSection').classList.remove('hidden');
         document.getElementById('categoriesContent')?.classList.add('hidden');
-        document.getElementById('tooltipsContent')?.classList.add('hidden');
+
+        // Forzar ocultar tooltipsContent
+        const tooltipsContent = document.getElementById('tooltipsContent');
+        if (tooltipsContent) {
+            tooltipsContent.classList.add('hidden');
+            tooltipsContent.style.display = 'none';
+        }
 
         // Cargar correcciones
         this.loadCurrentBankCorrections();
@@ -168,7 +180,13 @@ class AdminApp {
         document.getElementById('rulesSection')?.classList.add('hidden');
         document.getElementById('correctionsSection')?.classList.add('hidden');
         document.getElementById('categoriesContent')?.classList.remove('hidden');
-        document.getElementById('tooltipsContent')?.classList.add('hidden');
+
+        // Forzar ocultar tooltipsContent
+        const tooltipsContent = document.getElementById('tooltipsContent');
+        if (tooltipsContent) {
+            tooltipsContent.classList.add('hidden');
+            tooltipsContent.style.display = 'none';
+        }
 
         console.log(`🔄 Cambiado a: Categorías`);
     }
@@ -1513,7 +1531,14 @@ class AdminApp {
         document.getElementById('rulesSection')?.classList.add('hidden');
         document.getElementById('correctionsSection')?.classList.add('hidden');
         document.getElementById('categoriesContent')?.classList.add('hidden');
-        document.getElementById('tooltipsContent')?.classList.remove('hidden');
+
+        // Forzar mostrar tooltipsContent
+        const tooltipsContent = document.getElementById('tooltipsContent');
+        if (tooltipsContent) {
+            tooltipsContent.classList.remove('hidden');
+            tooltipsContent.style.display = 'block';
+            console.log('🔧 FORZADO: tooltipsContent mostrado');
+        }
 
         // Cargar tooltips existentes
         this.loadTooltips();
