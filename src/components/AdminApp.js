@@ -103,6 +103,8 @@ class AdminApp {
         // Mostrar/ocultar secciones
         document.getElementById('rulesSection').classList.remove('hidden');
         document.getElementById('correctionsSection').classList.add('hidden');
+        document.getElementById('categoriesContent')?.classList.add('hidden');
+        document.getElementById('tooltipsContent')?.classList.add('hidden');
 
         // Actualizar título
         const bankDisplayName = bankName === 'global' ? 'Reglas Globales' : bankName;
@@ -135,11 +137,40 @@ class AdminApp {
         // Mostrar/ocultar secciones
         document.getElementById('rulesSection').classList.add('hidden');
         document.getElementById('correctionsSection').classList.remove('hidden');
+        document.getElementById('categoriesContent')?.classList.add('hidden');
+        document.getElementById('tooltipsContent')?.classList.add('hidden');
 
         // Cargar correcciones
         this.loadCurrentBankCorrections();
 
         console.log(`🔄 Cambiado a: Correcciones`);
+    }
+
+    /**
+     * Cambia a la sección de categorías
+     */
+    switchToCategories() {
+        this.currentView = 'categories';
+
+        // Actualizar tabs activos
+        document.querySelectorAll('.bank-tab').forEach(tab => {
+            tab.classList.remove('active', 'border-blue-500', 'text-blue-600');
+            tab.classList.add('border-transparent', 'text-gray-500');
+        });
+
+        const categoriesTab = document.getElementById('categoriesTab');
+        if (categoriesTab) {
+            categoriesTab.classList.add('active', 'border-blue-500', 'text-blue-600');
+            categoriesTab.classList.remove('border-transparent', 'text-gray-500');
+        }
+
+        // Mostrar/ocultar secciones
+        document.getElementById('rulesSection')?.classList.add('hidden');
+        document.getElementById('correctionsSection')?.classList.add('hidden');
+        document.getElementById('categoriesContent')?.classList.remove('hidden');
+        document.getElementById('tooltipsContent')?.classList.add('hidden');
+
+        console.log(`🔄 Cambiado a: Categorías`);
     }
 
     /**
@@ -1539,11 +1570,11 @@ class AdminApp {
                         </div>
                     </div>
                     <div class="flex items-center space-x-2 ml-4">
-                        <button onclick="adminApp.editTooltip('${pattern}')"
+                        <button onclick="window.adminApp.editTooltip('${pattern}')"
                                 class="text-blue-600 hover:text-blue-800 text-sm">
                             ✏️ Editar
                         </button>
-                        <button onclick="adminApp.deleteTooltip('${pattern}')"
+                        <button onclick="window.adminApp.deleteTooltip('${pattern}')"
                                 class="text-red-600 hover:text-red-800 text-sm">
                             🗑️ Eliminar
                         </button>
