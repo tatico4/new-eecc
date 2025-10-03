@@ -196,8 +196,8 @@ class ClientApp {
         return `
             <div>
                 <div class="mb-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-2">📊 Dashboard Financiero</h2>
-                    <p class="text-gray-600">Insights inteligentes sobre tus hábitos de gasto</p>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">📊 Tu plata al descubierto</h2>
+                    <p class="text-gray-600">Te mostramos la verdad sobre tus gastos, sin tecnicismos</p>
                 </div>
 
                 <!-- Summary Cards -->
@@ -208,7 +208,7 @@ class ClientApp {
                 <!-- Category Chart Section -->
                 <div class="mb-8">
                     <div class="bg-white p-6 rounded-lg shadow">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">📊 Gastos por Categoría</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">🍰 ¿En qué te gastaste tu plata?</h3>
                         <div style="width: 400px; height: 400px; margin: 0 auto; position: relative; overflow: hidden;">
                             <canvas id="categoryChart" width="400" height="400" style="max-width: 400px; max-height: 400px; display: block;"></canvas>
                         </div>
@@ -228,7 +228,7 @@ class ClientApp {
 
                 <!-- Insights Section -->
                 <div id="insightsSection" class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">💡 Insights Inteligentes</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">💡 Cosas que deberías saber</h3>
                     <div id="insightsList">
                         <!-- Insights se generan dinámicamente -->
                     </div>
@@ -495,22 +495,22 @@ class ClientApp {
                             <span class="text-blue-600 text-sm">📄</span>
                         </div>
                         <div>
-                            <h3 class="text-base font-semibold text-blue-900">Período Anterior</h3>
-                            <p class="text-xs text-blue-700">Estado de cuenta anterior</p>
+                            <h3 class="text-base font-semibold text-blue-900">¿Cómo venías el mes pasado?</h3>
+                            <p class="text-xs text-blue-700">Lo que ya pagaste de tu tarjeta</p>
                         </div>
                     </div>
 
                     <div class="space-y-3">
                         <div class="bg-white p-3 rounded-lg border border-blue-100">
-                            <h4 class="text-xs font-medium text-gray-600 mb-1">💰 Monto Facturado</h4>
+                            <h4 class="text-xs font-medium text-gray-600 mb-1">💰 Lo que te llegó</h4>
                             <p class="text-xl font-bold text-blue-600">$${stats.billedAmount.toLocaleString('es-CL')}</p>
-                            <p class="text-xs text-gray-500">Lo que debías pagar</p>
+                            <p class="text-xs text-gray-500">Monto de tu estado de cuenta</p>
                         </div>
 
                         <div class="bg-white p-3 rounded-lg border border-blue-100">
-                            <h4 class="text-xs font-medium text-gray-600 mb-1">💳 Total Pagado</h4>
+                            <h4 class="text-xs font-medium text-gray-600 mb-1">💳 Lo que ya pagaste</h4>
                             <p class="text-xl font-bold text-green-600">$${stats.totalPaid.toLocaleString('es-CL')}</p>
-                            <p class="text-xs text-gray-500">${stats.paidCount} pagos realizados</p>
+                            <p class="text-xs text-gray-500">${stats.paidCount} abonos a tu tarjeta</p>
                         </div>
 
                         ${stats.billedAmount > 0 ? this.renderPaymentStatusCompact(stats) : ''}
@@ -524,22 +524,28 @@ class ClientApp {
                             <span class="text-red-600 text-sm">💸</span>
                         </div>
                         <div>
-                            <h3 class="text-base font-semibold text-red-900">Período Actual</h3>
-                            <p class="text-xs text-red-700">Nuevos gastos del mes</p>
+                            <h3 class="text-base font-semibold text-red-900">¿En qué gastaste este mes?</h3>
+                            <p class="text-xs text-red-700">Los nuevos gastos que tendrás que pagar</p>
                         </div>
                     </div>
 
                     <div class="space-y-3">
                         <div class="bg-white p-3 rounded-lg border border-red-100">
-                            <h4 class="text-xs font-medium text-gray-600 mb-1">💸 Total Gastos</h4>
+                            <h4 class="text-xs font-medium text-gray-600 mb-1">💸 Plata que gastaste</h4>
                             <p class="text-xl font-bold text-red-600">$${stats.totalExpenses.toLocaleString('es-CL')}</p>
-                            <p class="text-xs text-gray-500">${stats.expenseCount} transacciones</p>
+                            <p class="text-xs text-gray-500">${stats.expenseCount} compras</p>
                         </div>
 
                         <div class="bg-white p-3 rounded-lg border border-red-100">
-                            <h4 class="text-xs font-medium text-gray-600 mb-1">📈 Promedio por Gasto</h4>
-                            <p class="text-xl font-bold text-orange-600">$${stats.avgExpense.toLocaleString('es-CL')}</p>
-                            <p class="text-xs text-gray-500">Por transacción</p>
+                            <h4 class="text-xs font-medium text-gray-600 mb-1">🏆 Dónde más gastaste</h4>
+                            <div class="space-y-1">
+                                ${this.getTop3Categories().map((cat, index) => `
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs text-gray-600">${index + 1}. ${cat.name}</span>
+                                        <span class="text-xs font-medium text-red-600">$${cat.amount.toLocaleString('es-CL')}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -565,31 +571,37 @@ class ClientApp {
                         <span class="text-blue-600 text-sm">📊</span>
                     </div>
                     <div>
-                        <h3 class="text-lg font-semibold text-blue-900">Mi resumen del mes:</h3>
-                        <p class="text-xs text-blue-700">Movimientos del período</p>
+                        <h3 class="text-lg font-semibold text-blue-900">¿En qué se fue tu plata este mes?</h3>
+                        <p class="text-xs text-blue-700">Te mostramos todo clarito, sin códigos raros</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <!-- Total Ingresos -->
                     <div class="bg-white p-3 rounded-lg border border-green-100">
-                        <h4 class="text-xs font-medium text-gray-600 mb-1">📈 Total Ingresos</h4>
+                        <h4 class="text-xs font-medium text-gray-600 mb-1">💰 Plata que entró</h4>
                         <p class="text-xl font-bold text-green-600">$${(cuentaData.totalAbonos || 0).toLocaleString('es-CL')}</p>
                         <p class="text-xs text-gray-500">${this.currentTransactions?.filter(t => t.type === 'deposit').length || 0} abonos</p>
                     </div>
 
                     <!-- Total Gastos -->
                     <div class="bg-white p-3 rounded-lg border border-red-100">
-                        <h4 class="text-xs font-medium text-gray-600 mb-1">💸 Total Gastos</h4>
+                        <h4 class="text-xs font-medium text-gray-600 mb-1">💸 Plata que gastaste</h4>
                         <p class="text-xl font-bold text-red-600">$${(cuentaData.totalCargos || 0).toLocaleString('es-CL')}</p>
-                        <p class="text-xs text-gray-500">${stats.expenseCount || 0} transacciones</p>
+                        <p class="text-xs text-gray-500">${stats.expenseCount || 0} compras</p>
                     </div>
 
-                    <!-- Mayor Gasto -->
-                    <div class="bg-white p-3 rounded-lg border border-orange-100">
-                        <h4 class="text-xs font-medium text-gray-600 mb-1">🎯 Tu mayor gasto:</h4>
-                        <p class="text-lg font-bold text-orange-600">${mayorGasto.categoria}</p>
-                        <p class="text-sm text-orange-500">$${mayorGasto.monto.toLocaleString('es-CL')} (${mayorGasto.transacciones} veces)</p>
+                    <!-- Top 3 Categorías -->
+                    <div class="bg-white p-3 rounded-lg border border-purple-100">
+                        <h4 class="text-xs font-medium text-gray-600 mb-1">🏆 Dónde más gastaste</h4>
+                        <div class="space-y-1">
+                            ${this.getTop3Categories().map((cat, index) => `
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-600">${index + 1}. ${cat.name}</span>
+                                    <span class="text-xs font-medium text-purple-600">$${cat.amount.toLocaleString('es-CL')}</span>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -680,6 +692,55 @@ class ClientApp {
             monto: maxAmount,
             transacciones: maxCount
         };
+    }
+
+    /**
+     * Obtiene las top 3 categorías con más gastos
+     */
+    getTop3Categories() {
+        if (!this.currentTransactions || this.currentTransactions.length === 0) {
+            return [
+                { name: 'Sin datos', amount: 0 },
+                { name: 'Sin datos', amount: 0 },
+                { name: 'Sin datos', amount: 0 }
+            ];
+        }
+
+        // Filtrar solo gastos (transacciones negativas)
+        const expenses = this.currentTransactions.filter(t => t.amount < 0);
+
+        // Agrupar por categoría y sumar montos
+        const categoryTotals = {};
+        expenses.forEach(transaction => {
+            const category = transaction.category || 'Otros';
+            if (!categoryTotals[category]) {
+                categoryTotals[category] = 0;
+            }
+            categoryTotals[category] += Math.abs(transaction.amount);
+        });
+
+        // Convertir a array y ordenar por monto descendente
+        const sortedCategories = Object.entries(categoryTotals)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 3); // Top 3
+
+        // Llenar con datos vacíos si no hay suficientes categorías
+        const result = [];
+        for (let i = 0; i < 3; i++) {
+            if (sortedCategories[i]) {
+                result.push({
+                    name: sortedCategories[i][0],
+                    amount: sortedCategories[i][1]
+                });
+            } else {
+                result.push({
+                    name: 'Sin gastos',
+                    amount: 0
+                });
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -1319,17 +1380,17 @@ class ClientApp {
         document.getElementById('insightsList').innerHTML = `
             <div class="space-y-4">
                 <div class="flex items-start space-x-3">
-                    <span class="text-2xl">🍽️</span>
+                    <span class="text-2xl">🍔</span>
                     <div>
-                        <h4 class="font-medium text-gray-900">Mayor gasto en comida</h4>
-                        <p class="text-gray-600">Considera cocinar más en casa para ahorrar</p>
+                        <h4 class="font-medium text-gray-900">Te está saliendo caro el delivery</h4>
+                        <p class="text-gray-600">Considera cocinar más seguido, puedes ahorrar bastante plata</p>
                     </div>
                 </div>
                 <div class="flex items-start space-x-3">
-                    <span class="text-2xl">📊</span>
+                    <span class="text-2xl">✅</span>
                     <div>
-                        <h4 class="font-medium text-gray-900">Análisis completado</h4>
-                        <p class="text-gray-600">${this.currentTransactions.length} transacciones procesadas con ${Math.round(this.categoryEngine.confidenceThreshold)}% de precisión</p>
+                        <h4 class="font-medium text-gray-900">Todo listo</h4>
+                        <p class="text-gray-600">Revisamos ${this.currentTransactions.length} movimientos y los categorizamos para que los entiendas fácil</p>
                     </div>
                 </div>
             </div>
