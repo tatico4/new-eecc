@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Tooltips | AnalisisEC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-lightbulb text-2xl text-yellow-600"></i>
+                    <span class="font-bold text-xl text-gray-900">💡 Gestión de Explicaciones</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="app.html" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-play mr-2"></i>Probar Tooltips
+                    </a>
+                    <a href="admin.html" class="text-gray-700 hover:text-indigo-600 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Volver al Admin
+                    </a>
+                    <a href="index.html" class="text-gray-700 hover:text-indigo-600 transition-colors">
+                        <i class="fas fa-home mr-2"></i>Inicio
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <!-- Tooltips/Explanations Content -->
+            <div id="tooltipsContent">
+                <!-- Header -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">💡 Gestión de Explicaciones</h3>
+                            <p class="text-gray-600 mt-1">Configura explicaciones personalizadas para transacciones específicas que aparecerán en tooltips</p>
+                        </div>
+                        <div class="flex space-x-3">
+                            <button id="exportTooltipsBtn" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm font-medium">
+                                📤 Exportar
+                            </button>
+                            <button id="importTooltipsBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium">
+                                📥 Importar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Explanation Section -->
+                <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-6 mb-8 border border-yellow-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">➕ Agregar Nueva Explicación</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Patrón de Búsqueda</label>
+                                <input type="text" id="newTooltipPattern"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                                       placeholder="ej: comision mantencion">
+                                <p class="text-xs text-gray-500 mt-1">Texto que debe contener la descripción original (sin mayúsculas)</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Traducido</label>
+                                <input type="text" id="newTooltipName"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                                       placeholder="ej: Comisión por mantención de cuenta">
+                                <p class="text-xs text-gray-500 mt-1">Nombre claro y amigable que aparecerá en el tooltip</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Ícono</label>
+                                <select id="newTooltipIcon" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                                    <option value="🏛️">🏛️ Impuestos</option>
+                                    <option value="🛡️">🛡️ Seguros</option>
+                                    <option value="🏦">🏦 Comisiones bancarias</option>
+                                    <option value="⚡">⚡ Servicios básicos</option>
+                                    <option value="⚠️">⚠️ Multas y cargos</option>
+                                    <option value="🔄">🔄 Transferencias</option>
+                                    <option value="⭐">⭐ Personalizado</option>
+                                    <option value="ℹ️">ℹ️ Información general</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Explicación Detallada</label>
+                                <textarea id="newTooltipExplanation" rows="4"
+                                          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 resize-none"
+                                          placeholder="ej: Este es un cargo por mantención de cuenta. Algunos bancos lo cobran mensual o anualmente. Revisa si está justificado según tu plan de cuenta."></textarea>
+                                <p class="text-xs text-gray-500 mt-1">Explicación clara de qué es esta transacción y consejos útiles</p>
+                            </div>
+                            <div class="flex items-end space-x-3">
+                                <button id="addTooltipBtn" class="flex-1 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors font-medium">
+                                    ✨ Crear Explicación
+                                </button>
+                                <button id="testTooltipBtn" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                                    🧪 Probar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explanations List -->
+                <div>
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">💡 Explicaciones Configuradas</h3>
+                        <div class="text-sm text-gray-500">
+                            <span id="tooltipCount">0 explicaciones</span>
+                        </div>
+                    </div>
+
+                    <div id="tooltipsContainer" class="space-y-4">
+                        <div class="text-center py-12 text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                            <p class="mt-4 text-lg font-medium">No hay explicaciones configuradas</p>
+                            <p class="mt-2">Agrega tu primera explicación usando el formulario superior</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Simplificado -->
+    <script>
+        class SimpleTooltipManager {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                console.log('🚀 SimpleTooltipManager iniciado');
+                this.setupEventListeners();
+                this.loadTooltips();
+            }
+
+            setupEventListeners() {
+                document.getElementById('addTooltipBtn')?.addEventListener('click', () => this.addNewTooltip());
+                document.getElementById('testTooltipBtn')?.addEventListener('click', () => this.testTooltip());
+                document.getElementById('exportTooltipsBtn')?.addEventListener('click', () => this.exportTooltips());
+                document.getElementById('importTooltipsBtn')?.addEventListener('click', () => this.importTooltips());
+            }
+
+            loadTooltips() {
+                const saved = localStorage.getItem('financeAnalyzer_customExplanations') || '{}';
+                const tooltips = JSON.parse(saved);
+                this.displayTooltips(tooltips);
+                this.updateTooltipCount(Object.keys(tooltips).length);
+            }
+
+            displayTooltips(tooltips) {
+                const container = document.getElementById('tooltipsContainer');
+                if (!container) return;
+
+                const entries = Object.entries(tooltips);
+
+                if (entries.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-12 text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                            <p class="mt-4 text-lg font-medium">No hay explicaciones configuradas</p>
+                            <p class="mt-2">Agrega tu primera explicación usando el formulario superior</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const tooltipCards = entries.map(([pattern, data]) => `
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="text-lg">${data.icon || 'ℹ️'}</span>
+                                    <h4 class="font-medium text-gray-900">${data.translatedName || pattern}</h4>
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2">
+                                    <span class="font-medium">Patrón:</span> "${pattern}"
+                                </div>
+                                <div class="text-sm text-gray-600">
+                                    ${data.explanation || 'Sin explicación'}
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 ml-4">
+                                <button onclick="tooltipManager.editTooltip('${pattern}')"
+                                        class="text-blue-600 hover:text-blue-800 text-sm">
+                                    ✏️ Editar
+                                </button>
+                                <button onclick="tooltipManager.deleteTooltip('${pattern}')"
+                                        class="text-red-600 hover:text-red-800 text-sm">
+                                    🗑️ Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                container.innerHTML = tooltipCards;
+            }
+
+            addNewTooltip() {
+                const pattern = document.getElementById('newTooltipPattern')?.value.trim();
+                const translatedName = document.getElementById('newTooltipName')?.value.trim();
+                const icon = document.getElementById('newTooltipIcon')?.value;
+                const explanation = document.getElementById('newTooltipExplanation')?.value.trim();
+
+                if (!pattern || !translatedName || !explanation) {
+                    alert('Por favor, completa todos los campos obligatorios');
+                    return;
+                }
+
+                const saved = localStorage.getItem('financeAnalyzer_customExplanations') || '{}';
+                const tooltips = JSON.parse(saved);
+
+                tooltips[pattern.toLowerCase()] = {
+                    translatedName,
+                    icon,
+                    explanation
+                };
+
+                localStorage.setItem('financeAnalyzer_customExplanations', JSON.stringify(tooltips));
+
+                // Limpiar formulario
+                document.getElementById('newTooltipPattern').value = '';
+                document.getElementById('newTooltipName').value = '';
+                document.getElementById('newTooltipExplanation').value = '';
+                document.getElementById('newTooltipIcon').value = '🏦';
+
+                this.loadTooltips();
+                console.log('✅ Nueva explicación agregada:', pattern);
+            }
+
+            editTooltip(pattern) {
+                const saved = localStorage.getItem('financeAnalyzer_customExplanations') || '{}';
+                const tooltips = JSON.parse(saved);
+                const data = tooltips[pattern];
+
+                if (!data) return;
+
+                document.getElementById('newTooltipPattern').value = pattern;
+                document.getElementById('newTooltipName').value = data.translatedName || '';
+                document.getElementById('newTooltipIcon').value = data.icon || '🏦';
+                document.getElementById('newTooltipExplanation').value = data.explanation || '';
+
+                delete tooltips[pattern];
+                localStorage.setItem('financeAnalyzer_customExplanations', JSON.stringify(tooltips));
+                this.loadTooltips();
+            }
+
+            deleteTooltip(pattern) {
+                if (!confirm(`¿Estás seguro de eliminar la explicación para "${pattern}"?`)) {
+                    return;
+                }
+
+                const saved = localStorage.getItem('financeAnalyzer_customExplanations') || '{}';
+                const tooltips = JSON.parse(saved);
+
+                delete tooltips[pattern];
+
+                localStorage.setItem('financeAnalyzer_customExplanations', JSON.stringify(tooltips));
+                this.loadTooltips();
+
+                console.log('🗑️ Explicación eliminada:', pattern);
+            }
+
+            testTooltip() {
+                const pattern = document.getElementById('newTooltipPattern')?.value.trim();
+                if (!pattern) {
+                    alert('Ingresa un patrón para probar');
+                    return;
+                }
+
+                const testDescriptions = [
+                    'COMISION MANTENCION CTA CTE',
+                    'SEGURO VIDA DESGRAVAMEN',
+                    'PAGO IMPUESTO SII RENTA',
+                    'TRANSFERENCIA RED BANCOS',
+                    'compra falabella plaza'
+                ];
+
+                const matches = testDescriptions.filter(desc =>
+                    desc.toLowerCase().includes(pattern.toLowerCase())
+                );
+
+                if (matches.length > 0) {
+                    alert(`✅ El patrón "${pattern}" coincide con:\n${matches.join('\n')}`);
+                } else {
+                    alert(`❌ El patrón "${pattern}" no coincide con ninguna descripción de prueba`);
+                }
+            }
+
+            updateTooltipCount(count) {
+                const countElement = document.getElementById('tooltipCount');
+                if (countElement) {
+                    countElement.textContent = `${count} explicaciones`;
+                }
+            }
+
+            exportTooltips() {
+                const saved = localStorage.getItem('financeAnalyzer_customExplanations') || '{}';
+                const tooltips = JSON.parse(saved);
+
+                const dataStr = JSON.stringify(tooltips, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = 'explicaciones_transacciones.json';
+                link.click();
+
+                console.log('📤 Explicaciones exportadas');
+            }
+
+            importTooltips() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const importedTooltips = JSON.parse(event.target.result);
+
+                            for (const [pattern, data] of Object.entries(importedTooltips)) {
+                                if (!data.translatedName && !data.explanation) {
+                                    throw new Error(`Estructura inválida para: ${pattern}`);
+                                }
+                            }
+
+                            localStorage.setItem('financeAnalyzer_customExplanations', JSON.stringify(importedTooltips));
+                            this.loadTooltips();
+
+                            alert(`✅ Se importaron ${Object.keys(importedTooltips).length} explicaciones`);
+                        } catch (error) {
+                            alert(`❌ Error importando archivo: ${error.message}`);
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+
+                input.click();
+            }
+        }
+
+        // Inicializar al cargar la página
+        let tooltipManager;
+        document.addEventListener('DOMContentLoaded', function() {
+            tooltipManager = new SimpleTooltipManager();
+        });
+    </script>
+</body>
+</html>
