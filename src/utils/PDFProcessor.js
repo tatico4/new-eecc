@@ -52,9 +52,10 @@ class PDFProcessor {
      * Extrae texto de un archivo PDF usando PDF.js
      * @param {File} file - Archivo PDF
      * @param {Function} progressCallback - Callback para mostrar progreso (opcional)
+     * @param {string} password - Contraseña del PDF (opcional)
      * @returns {Promise<string>} - Texto extraído del PDF
      */
-    async extractTextFromFile(file, progressCallback = null) {
+    async extractTextFromFile(file, progressCallback = null, password = null) {
         // Validar archivo
         const validation = this.validateFile(file);
         if (!validation.isValid) {
@@ -74,7 +75,7 @@ class PDFProcessor {
             if (progressCallback) progressCallback(30, 'Cargando PDF...');
 
             // Usar PDF.js para extraer texto
-            const text = await this.extractTextWithPdfJs(arrayBuffer, progressCallback);
+            const text = await this.extractTextWithPdfJs(arrayBuffer, progressCallback, password);
 
             if (progressCallback) progressCallback(100, 'Extracción completada');
 
@@ -82,6 +83,12 @@ class PDFProcessor {
 
         } catch (error) {
             console.error('Error extrayendo texto del PDF:', error);
+
+            // Propagar errores específicos sin envolver
+            if (error.name === 'PDFPasswordRequired') {
+                throw error;
+            }
+
             throw new Error(`Error procesando PDF: ${error.message}`);
         }
     }
@@ -111,14 +118,28 @@ class PDFProcessor {
      * Extrae texto usando PDF.js
      * @param {ArrayBuffer} arrayBuffer - Buffer del PDF
      * @param {Function} progressCallback - Callback de progreso
+     * @param {string} password - Contraseña del PDF (opcional)
      * @returns {Promise<string>} - Texto extraído
      */
-    async extractTextWithPdfJs(arrayBuffer, progressCallback = null) {
+    async extractTextWithPdfJs(arrayBuffer, progressCallback = null, password = null) {
         try {
             if (progressCallback) progressCallback(40, 'Cargando documento PDF...');
 
-            // Cargar el documento PDF
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            console.log('🔑 [PDF DEBUG] Intentando cargar PDF con contraseña:', password ? 'SÍ (' + password.length + ' caracteres)' : 'NO');
+
+            // Preparar configuración para cargar el documento PDF
+            const config = { data: arrayBuffer };
+
+            // Solo agregar password si existe y no está vacío
+            if (password && password.trim()) {
+                config.password = password.trim();
+                console.log('🔑 [PDF DEBUG] Password agregado a config:', config.password.length, 'caracteres');
+            }
+
+            const loadingTask = pdfjsLib.getDocument(config);
+
+            // Cargar el documento PDF (PDF.js lanzará PasswordException si no hay contraseña)
+            const pdf = await loadingTask.promise;
             const numPages = pdf.numPages;
 
             if (progressCallback) progressCallback(50, `Procesando ${numPages} páginas...`);
@@ -152,6 +173,23 @@ class PDFProcessor {
 
         } catch (error) {
             console.error('Error con PDF.js:', error);
+
+            // Verificar si es un error de contraseña
+            if (error.name === 'PasswordException' ||
+                error.message?.includes('password') ||
+                error.message?.includes('encrypted') ||
+                error.message?.includes('No password given') ||
+                error.code === 1) { // PDF.js error code for password required
+
+                console.log('🔑 [PDF DEBUG] Error de contraseña detectado:', error.name, error.code, error.message);
+
+                // Crear un error específico para contraseña
+                const passwordError = new Error('PDF_PASSWORD_REQUIRED');
+                passwordError.name = 'PDFPasswordRequired';
+                passwordError.originalError = error;
+                throw passwordError;
+            }
+
             throw new Error(`Error extrayendo texto del PDF: ${error.message}`);
         }
     }
@@ -325,15 +363,18 @@ class PDFProcessor {
      * Procesa un archivo y extrae líneas candidatas para parsing
      * @param {File} file - Archivo PDF
      * @param {Function} progressCallback - Callback de progreso
+     * @param {string} password - Contraseña del PDF (opcional)
      * @returns {Promise<Object>} - {text: string, lines: string[], metadata: Object}
      */
-    async processFile(file, progressCallback = null) {
+    async processFile(file, progressCallback = null, password = null) {
         try {
+            console.log('🔑 [PROCESS DEBUG] processFile iniciado con contraseña:', password ? 'SÍ (' + password.length + ' chars)' : 'NO');
+
             if (progressCallback) progressCallback(0, 'Iniciando procesamiento...');
 
             const text = await this.extractTextFromFile(file, (progress, message) => {
                 if (progressCallback) progressCallback(progress * 0.8, message);
-            });
+            }, password);
 
             if (progressCallback) progressCallback(85, 'Extrayendo líneas candidatas...');
 

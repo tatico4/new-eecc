@@ -28,20 +28,23 @@ class BancoSantanderParser extends AbstractBankParser {
 
         // Patrones regex específicos para Santander
         this.patterns = {
-            // Fecha DD/MM/YY (formato Santander)
-            fecha: /\b(\d{1,2}\/\d{1,2}\/\d{2})\b/g,
+            // Fecha DD/MM/YY o DD/MM/YYYY (soporte para ambos formatos)
+            fecha: /\b(\d{1,2}\/\d{1,2}\/\d{2,4})\b/g,
 
             // Monto con signo de pesos: $123.456 o $-123.456 o $ -123.456
             monto: /\$\s*(-?\d{1,3}(?:\.\d{3})*)/g,
 
-            // Línea de transacción completa con lugar
-            transaccionCompleta: /^([A-Z\s]+?)\s+(\d{1,2}\/\d{1,2}\/\d{2})\s+(.+?)\s+\$\s*(-?\d{1,3}(?:\.\d{3})*)$/,
+            // Línea de transacción completa con lugar (soporte para fechas YY y YYYY)
+            transaccionCompleta: /^([A-Z\s]+?)\s+(\d{1,2}\/\d{1,2}\/\d{2,4})\s+(.+?)\s+\$\s*(-?\d{1,3}(?:\.\d{3})*)$/,
 
-            // Línea de cargo bancario (sin lugar) - mejorada para TRASP A CUOTAS
-            cargoBancario: /^(\d{1,2}\/\d{1,2}\/\d{2})\s+(.+?)\s+(?:\d+[,\.]\d+\s*%\s+)?\$\s*(-?\d{1,3}(?:\.\d{3})*)(?:\s+\$.*)?$/,
+            // Línea de cargo bancario (sin lugar) - soporte para ambos formatos de fecha
+            cargoBancario: /^(\d{1,2}\/\d{1,2}\/\d{2,4})\s+(.+?)\s+(?:\d+[,\.]\d+\s*%\s+)?\$\s*(-?\d{1,3}(?:\.\d{3})*)(?:\s+\$.*)?$/,
 
-            // Patrón específico para transacciones complejas como TRASP A CUOTAS
-            transaccionCompleja: /^(\d{1,2}\/\d{1,2}\/\d{2})\s+([A-Z\s]+?)\s+\d+[,\.]\d+\s*%.*?\$\s*(-?\d{1,3}(?:\.\d{3})*)(?:\s+\$.*)?$/
+            // Patrón específico para transacciones complejas - soporte para ambos formatos de fecha
+            transaccionCompleja: /^(\d{1,2}\/\d{1,2}\/\d{2,4})\s+([A-Z\s]+?)\s+\d+[,\.]\d+\s*%.*?\$\s*(-?\d{1,3}(?:\.\d{3})*)(?:\s+\$.*)?$/,
+
+            // Patrón simple: FECHA DESCRIPCION $ MONTO (formato más común)
+            transaccionSimple: /^(\d{1,2}\/\d{1,2}\/\d{2,4})\s+(.+?)\s+\$\s*(-?\d{1,3}(?:\.\d{3})*)$/
         };
 
         // Inicializar RulesManager si está disponible
@@ -55,7 +58,7 @@ class BancoSantanderParser extends AbstractBankParser {
     async initializeRulesManager() {
         try {
             if (typeof RulesManager !== 'undefined') {
-                this.rulesManager = new RulesManager();
+                this.rulesManager = RulesManager.getInstance();
                 await this.rulesManager.init();
                 console.log('✅ RulesManager integrado con BancoSantanderParser');
             }
@@ -160,6 +163,16 @@ class BancoSantanderParser extends AbstractBankParser {
                     console.log(`  ✅ Parseada como cargo bancario: ${JSON.stringify(result)}`);
                 } else {
                     console.log(`  ❌ No se pudo parsear como cargo bancario`);
+                }
+            }
+
+            // Si no funciona, intentar como transacción simple (FECHA DESCRIPCION $ MONTO)
+            if (!result) {
+                result = this.parseSimpleTransaction(cleanLine);
+                if (result) {
+                    console.log(`  ✅ Parseada como transacción simple: ${JSON.stringify(result)}`);
+                } else {
+                    console.log(`  ❌ No se pudo parsear como transacción simple`);
                 }
             }
 
@@ -269,6 +282,13 @@ class BancoSantanderParser extends AbstractBankParser {
         console.log(`    🔍 Cargo bancario match: fecha="${fecha}", descripcion="${descripcion}", monto="${montoStr}"`);
 
         const desc = descripcion.trim();
+
+        // Filtro de exclusión para metadata
+        if (this.isMetadataLine(line, fecha, desc, montoStr)) {
+            console.log(`    🚫 Línea rechazada por filtro de metadata`);
+            return null;
+        }
+
         const date = this.parseDate(fecha);
         const amount = this.parseAmount(montoStr);
 
@@ -286,6 +306,95 @@ class BancoSantanderParser extends AbstractBankParser {
             location: null,
             type: amount < 0 ? 'payment' : (isBankCharge ? 'charge' : 'purchase')
         };
+    }
+
+    /**
+     * Parsea transacciones simples (FECHA DESCRIPCION $ MONTO)
+     */
+    parseSimpleTransaction(line) {
+        const match = line.match(this.patterns.transaccionSimple);
+        if (!match) {
+            console.log(`    🔍 No coincide con patrón transaccionSimple: ${this.patterns.transaccionSimple}`);
+            return null;
+        }
+
+        const [, fecha, descripcion, montoStr] = match;
+        console.log(`    🔍 Transacción simple match: fecha="${fecha}", descripcion="${descripcion}", monto="${montoStr}"`);
+
+        const desc = descripcion.trim();
+
+        // Filtro de exclusión para metadata
+        if (this.isMetadataLine(line, fecha, desc, montoStr)) {
+            console.log(`    🚫 Línea rechazada por filtro de metadata`);
+            return null;
+        }
+
+        const date = this.parseDate(fecha);
+        const amount = this.parseAmount(montoStr);
+
+        if (!date || amount === null) return null;
+
+        // Determinar tipo de transacción basado en descripción y monto
+        const isCharge = this.CARGOS_BANCARIOS.some(cargo =>
+            desc.toUpperCase().includes(cargo)
+        );
+
+        return {
+            date,
+            description: this.cleanDescription(desc),
+            amount,
+            location: null,
+            type: amount < 0 ? 'payment' : (isCharge ? 'charge' : 'purchase')
+        };
+    }
+
+    /**
+     * Determina si una línea es metadata y no una transacción real
+     */
+    isMetadataLine(line, fecha, descripcion, montoStr) {
+        // 1. Rechazar si la descripción contiene la misma fecha que se extrajo
+        if (descripcion.includes(fecha)) {
+            console.log(`    📝 Metadata: descripción contiene fecha duplicada`);
+            return true;
+        }
+
+        // 2. Rechazar si hay múltiples montos en la línea (formato $ X.XXX repetido)
+        const montoPattern = /\$\s*\d{1,3}(?:\.\d{3})*/g;
+        const montos = line.match(montoPattern);
+        if (montos && montos.length > 1) {
+            // Verificar si los montos son iguales (típico de metadata)
+            const montosUnicos = [...new Set(montos)];
+            if (montosUnicos.length === 1) {
+                console.log(`    📝 Metadata: múltiples montos idénticos detectados`);
+                return true;
+            }
+        }
+
+        // 3. Rechazar si la descripción es principalmente números y símbolos
+        const soloNumerosYSimbolos = /^[\d\s\$\.\,\/\-]+$/.test(descripcion);
+        if (soloNumerosYSimbolos) {
+            console.log(`    📝 Metadata: descripción solo contiene números y símbolos`);
+            return true;
+        }
+
+        // 4. Rechazar patrones típicos de información de cuenta/facturación
+        const patronesMetadata = [
+            /MONTO\s+TOTAL/i,
+            /CUPO\s+TOTAL/i,
+            /COSTO\s+MONETARIO/i,
+            /FACTURADO\s+A\s+PAGAR/i,
+            /PRÓXIMO\s+PERÍODO/i,
+            /PERÍODO\s+DE\s+FACTURACIÓN/i
+        ];
+
+        for (const patron of patronesMetadata) {
+            if (patron.test(descripcion) || patron.test(line)) {
+                console.log(`    📝 Metadata: patrón de información detectado`);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -1,0 +1,48 @@
+[build]
+  # Carpeta de publicación (archivos estáticos)
+  publish = "."
+
+  # No necesitamos comando de build para sitio estático
+  command = ""
+
+[build.environment]
+  # Variables de entorno que se configurarán en Netlify Dashboard
+  NODE_ENV = "production"
+
+# Configuración para redirects (opcionales)
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/login"
+  to = "/admin-login.html"
+  status = 200
+
+# Headers de seguridad
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.supabase.co; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co;"
+
+# Headers específicos para archivos estáticos
+[[headers]]
+  for = "*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Configuración para archivos HTML (no cache para development)
+[[headers]]
+  for = "*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Admin | AnalisisEC</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -41,9 +42,23 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <!-- User Info -->
+                    <div id="userInfo" class="hidden">
+                        <span class="text-sm text-gray-600">Bienvenido,</span>
+                        <span id="userNameDisplay" class="font-medium text-gray-900"></span>
+                    </div>
+
+                    <!-- Navigation Links -->
                     <a href="index.html" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
                         👥 Vista Cliente
                     </a>
+
+                    <!-- Logout Button -->
+                    <button id="logoutBtn" class="hidden bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Cerrar Sesión
+                    </button>
+
+                    <!-- System Status -->
                     <div class="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm font-medium">
                         🟢 Sistema Activo
                     </div>
@@ -612,11 +627,13 @@
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="src/services/AdminAuth.js"></script>
     <script src="src/services/SupabaseClient.js"></script>
     <script src="src/core/RulesManager.js"></script>
     <script src="src/categorization/categories.js"></script>
@@ -624,8 +641,33 @@
     <script src="src/components/CategoryManager.js"></script>
     <script src="src/components/AdminApp.js"></script>
     <script>
-        // Inicializar la aplicación de administración
-        document.addEventListener('DOMContentLoaded', function() {
+        // Protección de autenticación y inicialización
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Inicializar sistema de autenticación
+            const auth = window.AdminAuth;
+            await auth.init();
+
+            // Verificar autenticación
+            const isAuthenticated = await auth.requireAuth();
+            if (!isAuthenticated) {
+                return; // requireAuth redirige automáticamente
+            }
+
+            // Mostrar información del usuario
+            const currentUser = auth.getCurrentUser();
+            if (currentUser) {
+                document.getElementById('userInfo').classList.remove('hidden');
+                document.getElementById('userNameDisplay').textContent = currentUser.full_name || currentUser.email;
+                document.getElementById('logoutBtn').classList.remove('hidden');
+            }
+
+            // Configurar logout
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                await auth.logout();
+                window.location.href = 'admin-login.html';
+            });
+
+            // Inicializar aplicación admin
             window.adminApp = new AdminApp();
         });
     </script>

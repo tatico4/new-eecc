@@ -12,6 +12,15 @@
     <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- PDF.js para procesamiento de PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <!-- Supabase para backend -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -74,6 +83,14 @@
             70% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
             100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
         }
+
+        .file-upload-area {
+            transition: all 0.3s ease;
+        }
+        .file-upload-area.dragover {
+            border-color: #3b82f6;
+            background-color: #dbeafe;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -89,7 +106,7 @@
                     <a href="#beneficios" class="text-gray-700 hover:text-indigo-600 transition-colors">Beneficios</a>
                     <a href="#como-funciona" class="text-gray-700 hover:text-indigo-600 transition-colors">¿Cómo funciona?</a>
                     <a href="#seguridad" class="text-gray-700 hover:text-indigo-600 transition-colors">Seguridad</a>
-                    <a href="app.html" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                    <a href="#" onclick="startAnalysis()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
                         Comenzar Gratis
                     </a>
                 </div>
@@ -115,7 +132,7 @@
                         esos códigos raros, comisiones ocultas y gastos que no recuerdas. ¡Sin matemáticas complicadas!
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                        <a href="app.html" class="bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors pulse-button">
+                        <a href="#" onclick="startAnalysis()" class="bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors pulse-button">
                             <i class="fas fa-rocket mr-2"></i>
                             Analizar mi Estado de Cuenta
                         </a>
@@ -361,7 +378,7 @@
             </div>
 
             <div class="text-center mt-12 fade-in">
-                <a href="app.html" class="bg-indigo-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-indigo-700 transition-colors inline-flex items-center">
+                <a href="#" onclick="startAnalysis()" class="bg-indigo-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-indigo-700 transition-colors inline-flex items-center">
                     <i class="fas fa-rocket mr-2"></i>
                     Comenzar Ahora - Es Gratis
                 </a>
@@ -523,10 +540,10 @@
                 Es gratis y te tomará solo 2 minutos descubrir la verdad sobre tus gastos.
             </p>
             <div class="fade-in">
-                <a href="app.html" class="bg-white text-indigo-600 px-12 py-6 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors inline-flex items-center pulse-button">
+                <button id="startAnalysisBtn" class="bg-white text-indigo-600 px-12 py-6 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors inline-flex items-center pulse-button">
                     <i class="fas fa-chart-line mr-3 text-xl"></i>
                     Analizar mi Estado de Cuenta Gratis
-                </a>
+                </button>
             </div>
             <div class="mt-6 text-indigo-100 fade-in">
                 <i class="fas fa-heart mr-2"></i>
@@ -534,6 +551,82 @@
             </div>
         </div>
     </section>
+
+    <!-- App Section (Hidden initially) -->
+    <div id="appSection" class="hidden min-h-screen bg-gray-50">
+        <!-- Navigation de la App -->
+        <nav class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <button onclick="showLanding()" class="flex items-center space-x-2 text-gray-700 hover:text-indigo-600 transition-colors">
+                        <i class="fas fa-arrow-left"></i>
+                        <span class="font-bold text-xl text-gray-900">AnalisisEC</span>
+                    </button>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="showLanding()" class="text-gray-700 hover:text-indigo-600 transition-colors">
+                            <i class="fas fa-home mr-2"></i>Volver al Inicio
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Modal de Contraseña de PDF -->
+        <div id="pdfPasswordModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <!-- Encabezado -->
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                                <i class="fas fa-lock text-yellow-600 text-xl"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-lg font-medium text-gray-900">PDF Protegido</h3>
+                                <p class="text-sm text-gray-500">Este PDF requiere contraseña</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mensaje -->
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-700">
+                            El archivo PDF que has seleccionado está protegido con contraseña.
+                            Por favor, ingresa la contraseña para poder analizar el contenido.
+                        </p>
+                    </div>
+
+                    <!-- Campo de contraseña -->
+                    <div class="mb-4">
+                        <label for="pdfPasswordInput" class="block text-sm font-medium text-gray-700 mb-2">
+                            Contraseña del PDF
+                        </label>
+                        <input type="password"
+                               id="pdfPasswordInput"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Ingresa la contraseña..."
+                               autocomplete="off">
+                        <div id="passwordError" class="hidden mt-2 text-sm text-red-600"></div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="flex items-center justify-end space-x-3">
+                        <button id="cancelPasswordBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                            Cancelar
+                        </button>
+                        <button id="submitPasswordBtn" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <span id="submitPasswordText">Desbloquear</span>
+                            <i id="submitPasswordSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="app" class="pt-4">
+            <!-- La aplicación se renderizará aquí -->
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="bg-gray-900 text-white py-12">
@@ -564,7 +657,7 @@
                 <div>
                     <h3 class="font-semibold mb-4">Herramientas</h3>
                     <ul class="space-y-2 text-gray-300">
-                        <li><a href="app.html" class="hover:text-white transition-colors">Analizar PDF</a></li>
+                        <li><a href="#" onclick="startAnalysis()" class="hover:text-white transition-colors">Analizar PDF</a></li>
                         <li><a href="admin.html" class="hover:text-white transition-colors">Panel Admin</a></li>
                         <li><a href="#" class="hover:text-white transition-colors">API (Próximamente)</a></li>
                     </ul>
@@ -587,7 +680,96 @@
         </div>
     </footer>
 
+    <!-- Scripts del sistema -->
+    <!-- Configuration -->
+    <script src="config.js"></script>
+
+    <!-- Core system -->
+    <script src="src/services/SupabaseClient.js"></script>
+    <script src="src/core/RulesManager.js"></script>
+
+    <!-- Parsers -->
+    <script src="src/parsers/AbstractBankParser.js"></script>
+    <script src="src/parsers/BancoFalabellaParser.js"></script>
+    <script src="src/parsers/BancoSantanderParser.js"></script>
+    <script src="src/parsers/BancoSantanderCuentaCorrienteParser.js"></script>
+    <script src="src/parsers/ParserFactory.js"></script>
+
+    <!-- Categorization -->
+    <script src="src/categorization/categories.js"></script>
+    <script src="src/categorization/CategoryEngine.js"></script>
+
+    <!-- Analytics -->
+    <script src="src/analyticsTransactionAnalyzer.js"></script>
+    <script src="src/analyticsInsightsGenerator.js"></script>
+    <script src="src/analyticsChartDataProcessor.js"></script>
+
+    <!-- Utilities -->
+    <script src="src/utils/PDFProcessor.js"></script>
+    <script src="src/utilsDataStorage.js"></script>
+    <script src="src/utilsValidationUtils.js"></script>
+
+    <!-- Client Interface -->
+    <script src="src/components/ClientApp.js"></script>
+    <script src="src/componentsTransactionTable.js"></script>
+    <script src="src/componentsAnalyticsCharts.js"></script>
+
     <script>
+        // Estado de la aplicación
+        let appState = {
+            currentView: 'landing',
+            clientApp: null
+        };
+
+        // Función para iniciar el análisis
+        function startAnalysis() {
+            console.log('Starting analysis...');
+            showAppSection();
+        }
+
+        // Función para mostrar la sección de la app
+        function showAppSection() {
+            // Ocultar landing page
+            document.querySelector('body > nav').style.display = 'none';
+            const sections = ['section', 'footer'];
+            sections.forEach(section => {
+                const elements = document.querySelectorAll(section);
+                elements.forEach(el => {
+                    if (!el.closest('#appSection')) {
+                        el.style.display = 'none';
+                    }
+                });
+            });
+
+            // Mostrar sección de la app
+            document.getElementById('appSection').classList.remove('hidden');
+
+            // Inicializar ClientApp si no existe
+            if (!appState.clientApp) {
+                appState.clientApp = new ClientApp();
+                appState.currentView = 'app';
+            }
+        }
+
+        // Función para volver al landing
+        function showLanding() {
+            // Mostrar landing page
+            document.querySelector('body > nav').style.display = 'block';
+            const sections = ['section', 'footer'];
+            sections.forEach(section => {
+                const elements = document.querySelectorAll(section);
+                elements.forEach(el => {
+                    if (!el.closest('#appSection')) {
+                        el.style.display = 'block';
+                    }
+                });
+            });
+
+            // Ocultar sección de la app
+            document.getElementById('appSection').classList.add('hidden');
+            appState.currentView = 'landing';
+        }
+
         // Smooth scrolling for anchor links
         function scrollTo(target) {
             document.querySelector(target).scrollIntoView({
@@ -622,6 +804,20 @@
                     console.log('Mobile menu clicked');
                 });
             }
+
+            // Configurar event listeners para los botones de inicio
+            const startButtons = [
+                document.getElementById('startAnalysisBtn'),
+                ...document.querySelectorAll('a[onclick="startAnalysis()"]'),
+                ...document.querySelectorAll('button[onclick="startAnalysis()"]')
+            ].filter(Boolean);
+
+            startButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    startAnalysis();
+                });
+            });
         });
 
         // Add smooth scroll behavior to all anchor links

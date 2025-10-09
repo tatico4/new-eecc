@@ -11,6 +11,14 @@
  */
 class RulesManager {
     constructor() {
+        // Implementar singleton
+        if (RulesManager.instance) {
+            console.log('🔄 [RULES] Devolviendo instancia existente de RulesManager');
+            return RulesManager.instance;
+        }
+
+        console.log('🚀 Iniciando RulesManager v1.0.0');
+
         this.organizationId = 'default'; // Para multi-org futuro
         this.config = null;
         this.analytics = null;
@@ -25,14 +33,24 @@ class RulesManager {
         // Versión para sincronización futura
         this.configVersion = '1.0.0';
 
+        // Guardar instancia singleton
+        RulesManager.instance = this;
+
         this.init();
+    }
+
+    // Método estático para obtener instancia
+    static getInstance() {
+        if (!RulesManager.instance) {
+            RulesManager.instance = new RulesManager();
+        }
+        return RulesManager.instance;
     }
 
     /**
      * Inicialización del sistema
      */
     async init() {
-        console.log('🚀 Iniciando RulesManager v' + this.configVersion);
 
         await this.loadConfig();
         this.setupDefaultConfig();

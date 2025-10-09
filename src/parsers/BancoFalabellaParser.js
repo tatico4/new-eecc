@@ -41,7 +41,7 @@ class BancoFalabellaParser extends AbstractBankParser {
     async initializeRulesManager() {
         try {
             if (typeof RulesManager !== 'undefined') {
-                this.rulesManager = new RulesManager();
+                this.rulesManager = RulesManager.getInstance();
                 await this.rulesManager.init();
                 console.log('✅ RulesManager integrado con BancoFalabellaParser');
             }

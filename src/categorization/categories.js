@@ -9,7 +9,7 @@ const CATEGORIAS_CON_EJEMPLOS_REALES = {
             'uber eats', 'jumbo', 'rappi', 'lider', 'hip lider', 'miyaco',
             'cafe caribe', 'la burguesia', 'dominos', 'pizza', 'restaurant',
             'comida', 'almuerzo', 'cena', 'desayuno', 'delivery', 'food',
-            'mc donald', 'burger king', 'kfc', 'subway'
+            'mc donald', 'burger king', 'kfc', 'subway', 'fork'
         ],
         ejemplos_reales: [
             'Uber eats', 'Hip lider vespucio sur', 'Jumbo oneclick', 'Rappi',
@@ -120,6 +120,8 @@ const CATEGORIAS_CON_EJEMPLOS_REALES = {
             'notaria', 'banco', 'credito', 'prestamo', 'comision', 'interes',
             'mantencion', 'cuota', 'dividendo', 'hipotecario', 'automotriz',
             'seguros', 'vida', 'hogar', 'responsabilidad',
+            // Seguros específicos
+            'seguro cesantia', 'seguro desgravamen', 'desgravamen', 'cesantia',
             // Específicos de cuenta corriente
             'traspaso internet', 'fondo mutuo', 'sistematico', 'pai',
             'intereses linea', 'impuesto sobregiro', 'uso lca', 'pac seg fraude',

@@ -19,7 +19,7 @@ class AdminApp {
         console.log('🚀 Iniciando AdminApp');
 
         // Inicializar RulesManager
-        this.rulesManager = new RulesManager();
+        this.rulesManager = RulesManager.getInstance();
 
         // Esperar a que se inicialice completamente
         await this.rulesManager.init();
@@ -28,6 +28,9 @@ class AdminApp {
         this.setupEventListeners();
         this.loadStats();
         this.loadCurrentBankRules();
+
+        // Hacer la instancia disponible globalmente para los clicks
+        window.adminApp = this;
 
         console.log('✅ AdminApp inicializado correctamente');
     }
@@ -76,6 +79,13 @@ class AdminApp {
         document.getElementById('testTooltipBtn')?.addEventListener('click', () => this.testTooltip());
         document.getElementById('exportTooltipsBtn')?.addEventListener('click', () => this.exportTooltips());
         document.getElementById('importTooltipsBtn')?.addEventListener('click', () => this.importTooltips());
+
+        // Keywords Management
+        document.getElementById('addKeywordBtn')?.addEventListener('click', () => this.addKeyword());
+        document.getElementById('newKeywordInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.addKeyword();
+        });
+
     }
 
     /**
@@ -188,7 +198,358 @@ class AdminApp {
             tooltipsContent.style.display = 'none';
         }
 
+        // Cargar categorías y inicializar interfaz
+        this.loadCategoriesInterface();
+
         console.log(`🔄 Cambiado a: Categorías`);
+    }
+
+    /**
+     * Carga la interfaz de categorías
+     */
+    loadCategoriesInterface() {
+        try {
+            console.log('🔄 Iniciando carga de interfaz de categorías...');
+
+            // Inicializar CategoryEngine para trabajar con keywords
+            if (typeof CategoryEngine !== 'undefined') {
+                this.categoryEngine = new CategoryEngine();
+                console.log('✅ CategoryEngine inicializado en AdminApp');
+
+                // Cargar lista de categorías después de inicializar CategoryEngine
+                this.loadCategoriesList();
+            } else {
+                console.warn('⚠️ CategoryEngine no disponible');
+                // Intentar cargar de todas formas con un timeout
+                setTimeout(() => {
+                    if (typeof CategoryEngine !== 'undefined') {
+                        this.categoryEngine = new CategoryEngine();
+                        console.log('✅ CategoryEngine inicializado con retraso');
+                        this.loadCategoriesList();
+                    }
+                }, 500);
+            }
+        } catch (error) {
+            console.error('❌ Error cargando interfaz de categorías:', error);
+        }
+    }
+
+    /**
+     * Carga la lista de categorías en el panel izquierdo
+     */
+    loadCategoriesList() {
+        const categoriesList = document.getElementById('categoriesList');
+        if (!categoriesList) {
+            console.error('❌ No se encontró elemento categoriesList');
+            return;
+        }
+
+        try {
+            console.log('🔄 Cargando lista de categorías...');
+
+            // Verificar que CategoryEngine esté disponible
+            if (!this.categoryEngine) {
+                console.warn('⚠️ CategoryEngine no inicializado, reintentando...');
+                categoriesList.innerHTML = '<div class="text-center py-8 text-orange-500">Cargando categorías...</div>';
+                return;
+            }
+
+            // Obtener categorías del sistema
+            const categories = this.categoryEngine.categories || {};
+            console.log('📂 Categorías disponibles:', Object.keys(categories));
+
+            let html = '';
+            let categoryCount = 0;
+
+            for (const [categoryName, categoryConfig] of Object.entries(categories)) {
+                if (categoryName === 'Otros') continue; // Skip "Otros"
+
+                categoryCount++;
+                const keywordCount = categoryConfig.keywords?.length || 0;
+
+                html += `
+                    <div class="category-item p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                         data-category="${categoryName}">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-lg">${categoryConfig.icon || '📦'}</span>
+                            <div>
+                                <h5 class="font-medium text-gray-900">${categoryName}</h5>
+                                <p class="text-xs text-gray-500">${keywordCount} keywords</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (html === '' || categoryCount === 0) {
+                html = '<div class="text-center py-8 text-gray-500">No hay categorías disponibles</div>';
+                console.warn('⚠️ No se encontraron categorías');
+            } else {
+                console.log(`✅ Cargadas ${categoryCount} categorías`);
+            }
+
+            categoriesList.innerHTML = html;
+
+            // Agregar event listeners a los elementos de categoría
+            this.setupCategoryClickListeners();
+        } catch (error) {
+            console.error('❌ Error cargando lista de categorías:', error);
+            categoriesList.innerHTML = '<div class="text-center py-8 text-red-500">Error cargando categorías</div>';
+        }
+    }
+
+    /**
+     * Configura los event listeners para clicks en categorías
+     */
+    setupCategoryClickListeners() {
+        const categoryItems = document.querySelectorAll('.category-item');
+        categoryItems.forEach(item => {
+            const categoryName = item.getAttribute('data-category');
+            if (categoryName) {
+                item.addEventListener('click', () => {
+                    console.log(`🎯 Click en categoría: ${categoryName}`);
+                    this.selectCategory(categoryName);
+                });
+            }
+        });
+        console.log(`✅ Event listeners configurados para ${categoryItems.length} categorías`);
+    }
+
+    /**
+     * Selecciona una categoría y muestra sus keywords
+     */
+    selectCategory(categoryName) {
+        try {
+            console.log(`🎯 Seleccionando categoría: ${categoryName}`);
+            this.selectedCategory = categoryName;
+
+            // Verificar que CategoryEngine esté disponible
+            if (!this.categoryEngine) {
+                console.error('❌ CategoryEngine no disponible para seleccionar categoría');
+                return;
+            }
+
+            // Actualizar UI de selección
+            document.querySelectorAll('.category-item').forEach(item => {
+                item.classList.remove('bg-blue-50', 'border-blue-300');
+                item.classList.add('border-gray-200');
+            });
+
+            const selectedItem = document.querySelector(`[data-category="${categoryName}"]`);
+            if (selectedItem) {
+                selectedItem.classList.add('bg-blue-50', 'border-blue-300');
+                selectedItem.classList.remove('border-gray-200');
+                console.log('✅ UI de selección actualizada');
+            } else {
+                console.error('❌ No se encontró elemento de categoría para seleccionar');
+            }
+
+            // Mostrar información de la categoría seleccionada
+            const categoryInfo = document.getElementById('selectedCategoryInfo');
+            if (categoryInfo) {
+                const categoryConfig = this.categoryEngine.categories[categoryName];
+                if (categoryConfig) {
+                    categoryInfo.innerHTML = `${categoryConfig.icon || '📦'} ${categoryName}`;
+                    console.log('✅ Información de categoría actualizada');
+                } else {
+                    console.error(`❌ No se encontró configuración para categoría: ${categoryName}`);
+                }
+            } else {
+                console.error('❌ No se encontró elemento selectedCategoryInfo');
+            }
+
+            // Mostrar sección de agregar keywords
+            const addKeywordSection = document.getElementById('addKeywordSection');
+            if (addKeywordSection) {
+                addKeywordSection.style.display = 'block';
+                console.log('✅ Sección de agregar keywords mostrada');
+            } else {
+                console.error('❌ No se encontró elemento addKeywordSection');
+            }
+
+            // Cargar keywords de la categoría
+            this.loadCategoryKeywords(categoryName);
+
+        } catch (error) {
+            console.error('❌ Error seleccionando categoría:', error);
+        }
+    }
+
+    /**
+     * Carga las keywords de una categoría específica
+     */
+    loadCategoryKeywords(categoryName) {
+        const keywordsList = document.getElementById('keywordsList');
+        if (!keywordsList) {
+            console.error('❌ No se encontró elemento keywordsList');
+            return;
+        }
+
+        try {
+            console.log(`🔖 Cargando keywords para categoría: ${categoryName}`);
+
+            if (!this.categoryEngine) {
+                console.error('❌ CategoryEngine no disponible para cargar keywords');
+                keywordsList.innerHTML = '<div class="text-center py-8 text-red-500">CategoryEngine no disponible</div>';
+                return;
+            }
+
+            const categoryConfig = this.categoryEngine.categories[categoryName];
+            if (!categoryConfig) {
+                console.error(`❌ No se encontró configuración para categoría: ${categoryName}`);
+                keywordsList.innerHTML = '<div class="text-center py-8 text-red-500">Categoría no encontrada</div>';
+                return;
+            }
+
+            // Obtener keywords estáticas
+            const staticKeywords = categoryConfig.keywords || [];
+            console.log(`📝 Keywords estáticas encontradas: ${staticKeywords.length}`, staticKeywords);
+
+            // Obtener keywords dinámicas (custom patterns)
+            const dynamicKeywords = [];
+            if (this.categoryEngine.customPatterns) {
+                for (const [pattern, info] of this.categoryEngine.customPatterns) {
+                    if (info.category === categoryName) {
+                        dynamicKeywords.push(pattern);
+                    }
+                }
+            }
+            console.log(`⚡ Keywords dinámicas encontradas: ${dynamicKeywords.length}`, dynamicKeywords);
+
+            // Combinar todas las keywords
+            const allKeywords = [...staticKeywords, ...dynamicKeywords];
+
+            if (allKeywords.length === 0) {
+                keywordsList.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <span class="text-3xl">🔖</span>
+                        <p class="mt-2">No hay keywords para esta categoría</p>
+                        <p class="text-xs">Agrega el primer keyword usando el formulario superior</p>
+                    </div>
+                `;
+                console.log('ℹ️ No hay keywords para mostrar');
+                return;
+            }
+
+            let html = '';
+            allKeywords.forEach((keyword, index) => {
+                const isStatic = staticKeywords.includes(keyword);
+                const typeLabel = isStatic ? '📁 Estática' : '⚡ Dinámica';
+                const typeColor = isStatic ? 'text-blue-600' : 'text-green-600';
+
+                html += `
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg border">
+                        <div class="flex-1">
+                            <span class="text-sm font-medium text-gray-700">${keyword}</span>
+                            <span class="ml-2 text-xs ${typeColor}">${typeLabel}</span>
+                        </div>
+                        ${!isStatic ? `
+                            <button class="remove-keyword-btn text-red-500 hover:text-red-700 text-xs"
+                                    data-category="${categoryName}" data-keyword="${keyword}">
+                                🗑️ Eliminar
+                            </button>
+                        ` : `
+                            <span class="text-xs text-gray-400">Fija</span>
+                        `}
+                    </div>
+                `;
+            });
+
+            keywordsList.innerHTML = html;
+
+            // Agregar event listeners para botones de eliminar
+            this.setupRemoveKeywordListeners();
+
+            console.log(`✅ Cargadas ${allKeywords.length} keywords para ${categoryName}`);
+
+        } catch (error) {
+            console.error('❌ Error cargando keywords:', error);
+            keywordsList.innerHTML = '<div class="text-center py-8 text-red-500">Error cargando keywords</div>';
+        }
+    }
+
+    /**
+     * Configura los event listeners para botones de eliminar keywords
+     */
+    setupRemoveKeywordListeners() {
+        const removeButtons = document.querySelectorAll('.remove-keyword-btn');
+        removeButtons.forEach(button => {
+            const categoryName = button.getAttribute('data-category');
+            const keyword = button.getAttribute('data-keyword');
+            if (categoryName && keyword) {
+                button.addEventListener('click', () => {
+                    console.log(`🗑️ Click eliminar keyword: ${keyword} de ${categoryName}`);
+                    this.removeKeyword(categoryName, keyword);
+                });
+            }
+        });
+        console.log(`✅ Event listeners configurados para ${removeButtons.length} botones de eliminar`);
+    }
+
+    /**
+     * Agrega un nuevo keyword a la categoría seleccionada
+     */
+    addKeyword() {
+        try {
+            const newKeywordInput = document.getElementById('newKeywordInput');
+            const keyword = newKeywordInput?.value?.trim();
+
+            if (!keyword) {
+                alert('Por favor ingresa un keyword');
+                return;
+            }
+
+            if (!this.selectedCategory) {
+                alert('Por favor selecciona una categoría primero');
+                return;
+            }
+
+            // Agregar keyword usando CategoryEngine
+            if (this.categoryEngine) {
+                this.categoryEngine.addCustomPattern(keyword, this.selectedCategory, 'admin_manual');
+                console.log(`✅ Keyword "${keyword}" agregado a ${this.selectedCategory}`);
+            }
+
+            // Limpiar input
+            newKeywordInput.value = '';
+
+            // Recargar keywords
+            this.loadCategoryKeywords(this.selectedCategory);
+
+            alert(`✅ Keyword "${keyword}" agregado correctamente a ${this.selectedCategory}`);
+
+        } catch (error) {
+            console.error('❌ Error agregando keyword:', error);
+            alert(`❌ Error: ${error.message}`);
+        }
+    }
+
+    /**
+     * Elimina un keyword de una categoría
+     */
+    removeKeyword(categoryName, keyword) {
+        try {
+            if (!confirm(`¿Estás seguro de eliminar "${keyword}" de ${categoryName}?`)) {
+                return;
+            }
+
+            // Remover del customPatterns si existe ahí
+            if (this.categoryEngine && this.categoryEngine.customPatterns.has(keyword.toLowerCase())) {
+                this.categoryEngine.customPatterns.delete(keyword.toLowerCase());
+                this.categoryEngine.saveCustomPatterns();
+            }
+
+            // TODO: También habría que removerlo de las keywords estáticas, pero eso requiere editar el archivo
+            // Por ahora solo mostramos un mensaje
+            alert(`⚠️ "${keyword}" removido de patrones personalizados. Para keywords estáticas, edita categories.js`);
+
+            // Recargar keywords
+            this.loadCategoryKeywords(categoryName);
+
+        } catch (error) {
+            console.error('❌ Error removiendo keyword:', error);
+            alert(`❌ Error: ${error.message}`);
+        }
     }
 
     /**
@@ -1547,6 +1908,285 @@ class AdminApp {
         this.loadTooltips();
 
         console.log(`🔄 Cambiado a: Explicaciones`);
+    }
+
+
+
+    /**
+     * Desactiva tooltip para un patrón específico
+     */
+    disableTooltip() {
+        try {
+            const pattern = document.getElementById('disableTooltipPattern')?.value?.trim();
+            if (!pattern) {
+                alert('Por favor ingresa un patrón para desactivar');
+                return;
+            }
+
+            // Guardar en localStorage
+            const exceptions = this.loadTooltipExceptions();
+            exceptions.disabled = exceptions.disabled || [];
+
+            if (!exceptions.disabled.includes(pattern.toLowerCase())) {
+                exceptions.disabled.push(pattern.toLowerCase());
+                this.saveTooltipExceptions(exceptions);
+            }
+
+            // Limpiar input
+            document.getElementById('disableTooltipPattern').value = '';
+
+            // Recargar lista
+            this.loadTooltipExceptions();
+
+            alert(`✅ Tooltip desactivado para: "${pattern}"`);
+
+        } catch (error) {
+            console.error('❌ Error desactivando tooltip:', error);
+            alert(`❌ Error: ${error.message}`);
+        }
+    }
+
+    /**
+     * Fuerza tooltip para un patrón específico
+     */
+    forceTooltip() {
+        try {
+            const pattern = document.getElementById('forceTooltipPattern')?.value?.trim();
+            const explanation = document.getElementById('forceTooltipExplanation')?.value?.trim();
+
+            if (!pattern) {
+                alert('Por favor ingresa un patrón');
+                return;
+            }
+
+            if (!explanation) {
+                alert('Por favor ingresa una explicación');
+                return;
+            }
+
+            // Guardar en localStorage
+            const exceptions = this.loadTooltipExceptions();
+            exceptions.forced = exceptions.forced || {};
+            exceptions.forced[pattern.toLowerCase()] = explanation;
+            this.saveTooltipExceptions(exceptions);
+
+            // Limpiar inputs
+            document.getElementById('forceTooltipPattern').value = '';
+            document.getElementById('forceTooltipExplanation').value = '';
+
+            // Recargar lista
+            this.loadTooltipExceptions();
+
+            alert(`✅ Tooltip forzado para: "${pattern}"`);
+
+        } catch (error) {
+            console.error('❌ Error forzando tooltip:', error);
+            alert(`❌ Error: ${error.message}`);
+        }
+    }
+
+    /**
+     * Carga excepciones de tooltip desde localStorage
+     */
+    loadTooltipExceptions() {
+        try {
+            const stored = localStorage.getItem('financeAnalyzer_tooltipExceptions');
+            return stored ? JSON.parse(stored) : { disabled: [], forced: {} };
+        } catch (error) {
+            console.warn('⚠️ Error cargando excepciones de tooltip:', error);
+            return { disabled: [], forced: {} };
+        }
+    }
+
+    /**
+     * Guarda excepciones de tooltip en localStorage
+     */
+    saveTooltipExceptions(exceptions) {
+        try {
+            localStorage.setItem('financeAnalyzer_tooltipExceptions', JSON.stringify(exceptions));
+        } catch (error) {
+            console.error('❌ Error guardando excepciones de tooltip:', error);
+        }
+    }
+
+    /**
+     * Muestra la lista de excepciones activas
+     */
+    loadTooltipExceptions() {
+        try {
+            const exceptions = this.loadTooltipExceptions();
+            const exceptionsList = document.getElementById('tooltipExceptionsList');
+
+            if (!exceptionsList) return;
+
+            let html = '';
+            let totalExceptions = 0;
+
+            // Excepciones deshabilitadas
+            if (exceptions.disabled && exceptions.disabled.length > 0) {
+                exceptions.disabled.forEach(pattern => {
+                    totalExceptions++;
+                    html += `
+                        <div class="flex items-center justify-between p-2 bg-red-50 rounded border border-red-200">
+                            <div class="flex-1">
+                                <span class="text-sm font-medium text-red-900">🚫 ${pattern}</span>
+                                <p class="text-xs text-red-600">Tooltip desactivado</p>
+                            </div>
+                            <button onclick="adminApp.removeTooltipException('disabled', '${pattern}')"
+                                    class="text-red-600 hover:text-red-800 text-xs">
+                                🗑️ Quitar
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+
+            // Excepciones forzadas
+            if (exceptions.forced && Object.keys(exceptions.forced).length > 0) {
+                Object.entries(exceptions.forced).forEach(([pattern, explanation]) => {
+                    totalExceptions++;
+                    html += `
+                        <div class="flex items-center justify-between p-2 bg-green-50 rounded border border-green-200">
+                            <div class="flex-1">
+                                <span class="text-sm font-medium text-green-900">✅ ${pattern}</span>
+                                <p class="text-xs text-green-600">${explanation.substring(0, 50)}${explanation.length > 50 ? '...' : ''}</p>
+                            </div>
+                            <button onclick="adminApp.removeTooltipException('forced', '${pattern}')"
+                                    class="text-green-600 hover:text-green-800 text-xs">
+                                🗑️ Quitar
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+
+            if (totalExceptions === 0) {
+                html = `
+                    <div class="text-center py-4 text-gray-500">
+                        <span class="text-2xl">📋</span>
+                        <p class="mt-2 text-sm">No hay excepciones configuradas</p>
+                    </div>
+                `;
+            }
+
+            exceptionsList.innerHTML = html;
+
+        } catch (error) {
+            console.error('❌ Error cargando lista de excepciones:', error);
+        }
+    }
+
+    /**
+     * Remueve una excepción de tooltip
+     */
+    removeTooltipException(type, pattern) {
+        try {
+            const exceptions = this.loadTooltipExceptions();
+
+            if (type === 'disabled') {
+                exceptions.disabled = exceptions.disabled.filter(p => p !== pattern);
+            } else if (type === 'forced') {
+                delete exceptions.forced[pattern];
+            }
+
+            this.saveTooltipExceptions(exceptions);
+            this.loadTooltipExceptions();
+
+            console.log(`✅ Excepción removida: ${type} - ${pattern}`);
+
+        } catch (error) {
+            console.error('❌ Error removiendo excepción:', error);
+        }
+    }
+
+    /**
+     * Muestra/oculta el panel de pruebas de tooltip
+     */
+    toggleTooltipTestPanel() {
+        const testSection = document.getElementById('tooltipTestSection');
+        if (testSection) {
+            const isHidden = testSection.style.display === 'none';
+            testSection.style.display = isHidden ? 'block' : 'none';
+        }
+    }
+
+    /**
+     * Ejecuta prueba de tooltips
+     */
+    runTooltipTest() {
+        try {
+            const testText = document.getElementById('testTooltipTransactions')?.value?.trim();
+            const resultsDiv = document.getElementById('tooltipTestResults');
+
+            if (!testText) {
+                alert('Ingresa descripciones para probar');
+                return;
+            }
+
+            if (!resultsDiv) return;
+
+            const lines = testText.split('\n').filter(line => line.trim());
+            let html = '';
+
+            lines.forEach(line => {
+                const description = line.trim();
+
+                // Simular la lógica de isSpecialTransaction
+                const exceptions = this.loadTooltipExceptions();
+                let hasTooltip = false;
+                let reason = '';
+
+                // Verificar si está deshabilitado
+                const isDisabled = exceptions.disabled.some(pattern =>
+                    description.toLowerCase().includes(pattern)
+                );
+
+                // Verificar si está forzado
+                const isForced = Object.keys(exceptions.forced || {}).some(pattern =>
+                    description.toLowerCase().includes(pattern)
+                );
+
+                if (isDisabled) {
+                    hasTooltip = false;
+                    reason = 'Deshabilitado manualmente';
+                } else if (isForced) {
+                    hasTooltip = true;
+                    reason = 'Forzado manualmente';
+                } else {
+                    // Lógica normal de patterns
+                    const specialPatterns = [
+                        /impuesto|tributario|iva|renta|sii|timbre|fiscal/,
+                        /seguro|asegur|vida|salud|vehiculo|hogar|acc\.|accidente/,
+                        /comision|mantenci[oó]n|anual|mensual|cargo.*cuenta|admin/,
+                        /electric|gas|agua|telefon|internet|cable|tv/,
+                        /multa|infraccion|penalizaci[oó]n|sobregiro|mora/,
+                        /transferencia.*red|tef|pago.*servicio|pago.*impuesto/,
+                        /cargo.*automatico|debito.*automatico|pago.*pac|red.*bancos/
+                    ];
+
+                    hasTooltip = specialPatterns.some(pattern => pattern.test(description.toLowerCase()));
+                    reason = hasTooltip ? 'Patrón automático detectado' : 'No coincide con patrones';
+                }
+
+                const colorClass = hasTooltip ? 'text-green-600' : 'text-red-600';
+                const icon = hasTooltip ? '✅' : '❌';
+
+                html += `
+                    <div class="border-b border-gray-200 pb-2 mb-2 last:border-b-0">
+                        <div class="font-medium text-sm">"${description}"</div>
+                        <div class="text-xs ${colorClass} mt-1">
+                            ${icon} ${hasTooltip ? 'Muestra tooltip' : 'Sin tooltip'} - ${reason}
+                        </div>
+                    </div>
+                `;
+            });
+
+            resultsDiv.innerHTML = html;
+
+        } catch (error) {
+            console.error('❌ Error en prueba de tooltip:', error);
+            resultsDiv.innerHTML = `<div class="text-red-500 text-sm">❌ Error: ${error.message}</div>`;
+        }
     }
 
     /**

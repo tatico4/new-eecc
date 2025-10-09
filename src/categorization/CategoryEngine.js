@@ -7,6 +7,60 @@ class CategoryEngine {
         this.categories = getAllCategories();
         this.customPatterns = new Map(); // Patrones aprendidos por el sistema de entrenamiento
         this.confidenceThreshold = 60; // Umbral mínimo de confianza para categorización automática
+
+        // Cargar patrones personalizados guardados
+        this.loadCustomPatterns();
+    }
+
+    /**
+     * Carga patrones personalizados desde localStorage
+     */
+    loadCustomPatterns() {
+        try {
+            // Cargar patrones de categorización personalizados
+            const savedPatterns = localStorage.getItem('categoryEngine_customPatterns');
+            if (savedPatterns) {
+                const patternsData = JSON.parse(savedPatterns);
+                for (const [pattern, categoryInfo] of Object.entries(patternsData)) {
+                    this.customPatterns.set(pattern, categoryInfo);
+                }
+                console.log(`✅ Cargados ${this.customPatterns.size} patrones personalizados`);
+            }
+
+            // También cargar keywords dinámicas del admin si existen
+            const savedKeywords = localStorage.getItem('adminCategories_dynamicKeywords');
+            if (savedKeywords) {
+                const keywordsData = JSON.parse(savedKeywords);
+                for (const [category, keywords] of Object.entries(keywordsData)) {
+                    keywords.forEach(keyword => {
+                        this.customPatterns.set(keyword.toLowerCase(), {
+                            category: category,
+                            source: 'admin_dynamic',
+                            addedDate: new Date().toISOString()
+                        });
+                    });
+                }
+                console.log(`✅ Cargadas keywords dinámicas del admin`);
+            }
+        } catch (error) {
+            console.warn('⚠️ Error cargando patrones personalizados:', error);
+        }
+    }
+
+    /**
+     * Guarda patrones personalizados en localStorage
+     */
+    saveCustomPatterns() {
+        try {
+            const patternsObject = {};
+            for (const [pattern, categoryInfo] of this.customPatterns) {
+                patternsObject[pattern] = categoryInfo;
+            }
+            localStorage.setItem('categoryEngine_customPatterns', JSON.stringify(patternsObject));
+            console.log(`💾 Guardados ${this.customPatterns.size} patrones personalizados`);
+        } catch (error) {
+            console.warn('⚠️ Error guardando patrones personalizados:', error);
+        }
     }
 
     /**
@@ -135,7 +189,13 @@ class CategoryEngine {
 
                     // Bonus por keyword al inicio de la descripción
                     if (lowerDescription.startsWith(keywordLower)) {
-                        categoryScore += 25; // Incrementado de 15 a 25
+                        keywordScore += 25; // Incrementado de 15 a 25
+                    }
+
+                    // Bonus por keyword como palabra completa (evita "fork" en "forklifts")
+                    const wordPattern = new RegExp(`\\b${keywordLower}\\b`, 'i');
+                    if (wordPattern.test(lowerDescription)) {
+                        keywordScore += 15; // Bonus por palabra completa
                     }
                 }
             }
@@ -319,6 +379,9 @@ class CategoryEngine {
             source: source,
             addedDate: new Date().toISOString()
         });
+
+        // Guardar en localStorage
+        this.saveCustomPatterns();
 
         console.log(`✅ Patrón personalizado agregado: "${pattern}" → ${category}`);
     }
