@@ -40,6 +40,11 @@ class ClientApp {
         this.setupEventListeners();
         this.loadSavedTransactions();
 
+        // Si no hay transacciones, ocultar botones de navegación
+        if (this.currentTransactions.length === 0) {
+            this.hideNavButtons(true);
+        }
+
         // Inicializar RulesManager para filtrado avanzado
         await this.initializeRulesManager();
 
@@ -86,6 +91,9 @@ class ClientApp {
                                 </button>
                                 <button id="viewTable" class="nav-btn px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300">
                                     📋 Transacciones
+                                </button>
+                                <button id="newAnalysisBtn" class="px-4 py-2 text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 transition-colors">
+                                    🔄 Nuevo Análisis
                                 </button>
                             </div>
                         </div>
@@ -294,6 +302,9 @@ class ClientApp {
         document.getElementById('viewDashboard').addEventListener('click', () => this.switchView('dashboard'));
         document.getElementById('viewTable').addEventListener('click', () => this.switchView('table'));
 
+        // Nuevo análisis
+        document.getElementById('newAnalysisBtn').addEventListener('click', () => this.startNewAnalysis());
+
         // Upload
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
@@ -410,6 +421,9 @@ class ClientApp {
             this.updateLoadingProgress(100, 'Completado');
             await this.delay(500);
             this.hideLoading();
+
+            // Mostrar botones de navegación
+            this.hideNavButtons(false);
 
             // Cambiar a dashboard
             this.switchView('dashboard');
@@ -597,6 +611,9 @@ class ClientApp {
             this.updateLoadingProgress(100, 'Completado');
             await this.delay(500);
             this.hideLoading();
+
+            // Mostrar botones de navegación
+            this.hideNavButtons(false);
 
             // Cambiar a dashboard
             this.switchView('dashboard');
@@ -2526,11 +2543,111 @@ class ClientApp {
             try {
                 this.currentTransactions = JSON.parse(saved);
                 console.log(`📂 Cargadas ${this.currentTransactions.length} transacciones guardadas`);
+
+                // Si hay transacciones guardadas, mostrar un mensaje para cargar nuevo archivo
+                if (this.currentTransactions.length > 0) {
+                    this.showPreviousDataMessage();
+                }
             } catch (error) {
                 console.warn('Error cargando transacciones guardadas:', error);
                 this.currentTransactions = [];
             }
         }
+    }
+
+    /**
+     * Muestra mensaje de datos anteriores y botón para limpiar
+     */
+    showPreviousDataMessage() {
+        const uploadMessage = document.querySelector('#uploadMessage');
+        if (uploadMessage) {
+            uploadMessage.className = 'mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg';
+            uploadMessage.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+                        <div>
+                            <p class="text-blue-800 font-medium">Datos anteriores encontrados</p>
+                            <p class="text-blue-600 text-sm">Tienes ${this.currentTransactions.length} transacciones del análisis anterior.</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="clientApp.viewPreviousData()" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
+                            Ver Datos Anteriores
+                        </button>
+                        <button onclick="clientApp.startNewAnalysis()" class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors">
+                            Nuevo Análisis
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Ver datos del análisis anterior
+     */
+    viewPreviousData() {
+        this.hideNavButtons(false);
+        this.switchView('dashboard');
+        this.showMessage('success', '✅ Datos anteriores cargados');
+    }
+
+    /**
+     * Iniciar un nuevo análisis (limpiar todo)
+     */
+    startNewAnalysis() {
+        // Mostrar confirmación
+        const confirmed = confirm('¿Estás seguro de que quieres iniciar un nuevo análisis? Se perderán los datos del análisis anterior.');
+
+        if (confirmed) {
+            // Limpiar datos
+            this.currentTransactions = [];
+            localStorage.removeItem('financeAnalyzer_transactions');
+
+            // Resetear estado
+            this.state.currentView = 'upload';
+            this.state.isProcessing = false;
+            this.state.uploadProgress = 0;
+            this.state.uploadMessage = '';
+
+            // Limpiar UI
+            const uploadMessage = document.querySelector('#uploadMessage');
+            if (uploadMessage) {
+                uploadMessage.innerHTML = '';
+                uploadMessage.className = 'mt-4';
+            }
+
+            // Resetear input de archivo
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) {
+                fileInput.value = '';
+            }
+
+            // Ocultar botones de navegación
+            this.hideNavButtons(true);
+
+            // Volver a vista de upload
+            this.switchView('upload');
+
+            this.showMessage('info', '🔄 Listo para un nuevo análisis');
+
+            console.log('🧹 Análisis anterior limpiado, listo para nuevo archivo');
+        }
+    }
+
+    /**
+     * Ocultar/mostrar botones de navegación
+     */
+    hideNavButtons(hide) {
+        const navButtons = document.querySelectorAll('.nav-btn');
+        navButtons.forEach(btn => {
+            if (hide) {
+                btn.style.display = 'none';
+            } else {
+                btn.style.display = 'inline-block';
+            }
+        });
     }
 
     /**
