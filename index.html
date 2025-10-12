@@ -955,8 +955,11 @@
                 setTimeout(waitAndProcess, 300);
             }
 
+            // Variable global para almacenar archivo que requiere contraseña
+            let currentPasswordFile = null;
+
             // Función para procesar archivo con feedback en landing
-            async function processFileWithLandingFeedback(file) {
+            async function processFileWithLandingFeedback(file, password = null) {
                 try {
                     // Actualizar progreso
                     const updateProgress = (step, percent) => {
@@ -981,7 +984,7 @@
                     const processed = await pdfProcessor.processFile(file, (progress, message) => {
                         const percent = Math.min(70, 30 + (progress * 0.4));
                         updateProgress('🔍 ' + message, percent);
-                    });
+                    }, password);
 
                     updateProgress('📊 Analizando transacciones...', 75);
 
@@ -1014,6 +1017,13 @@
                 } catch (error) {
                     console.error('Error procesando archivo:', error);
 
+                    // Verificar si es error de contraseña requerida
+                    if (error.name === 'PDFPasswordRequired') {
+                        console.log('🔑 [LANDING] PDF requiere contraseña, mostrando modal');
+                        showPasswordModalFromLanding(file);
+                        return;
+                    }
+
                     // Mostrar error en landing
                     heroDropZone.innerHTML = `
                         <div class="text-6xl mb-4">
@@ -1030,6 +1040,143 @@
                         </button>
                     `;
                 }
+            }
+
+            // Función para mostrar modal de contraseña desde landing
+            function showPasswordModalFromLanding(file) {
+                currentPasswordFile = file;
+                const modal = document.getElementById('pdfPasswordModal');
+                const passwordInput = document.getElementById('pdfPasswordInput');
+                const errorDiv = document.getElementById('passwordError');
+
+                // Limpiar estado anterior
+                passwordInput.value = '';
+                errorDiv.classList.add('hidden');
+                errorDiv.textContent = '';
+
+                // Mostrar modal
+                modal.classList.remove('hidden');
+                passwordInput.focus();
+
+                // Configurar listeners si no se han configurado
+                setupPasswordModalListenersForLanding();
+            }
+
+            // Variable para evitar múltiples configuraciones de listeners
+            let passwordListenersSetupForLanding = false;
+
+            // Configurar event listeners del modal para landing
+            function setupPasswordModalListenersForLanding() {
+                if (passwordListenersSetupForLanding) return;
+                passwordListenersSetupForLanding = true;
+
+                const submitBtn = document.getElementById('submitPasswordBtn');
+                const cancelBtn = document.getElementById('cancelPasswordBtn');
+                const passwordInput = document.getElementById('pdfPasswordInput');
+
+                // Botón cancelar
+                cancelBtn.addEventListener('click', () => {
+                    hidePasswordModal();
+                    currentPasswordFile = null;
+                    // Restaurar hero drop zone
+                    location.reload();
+                });
+
+                // Botón enviar
+                submitBtn.addEventListener('click', () => {
+                    handlePasswordSubmitFromLanding();
+                });
+
+                // Enter en el input
+                passwordInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        handlePasswordSubmitFromLanding();
+                    }
+                });
+
+                // ESC para cerrar
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const modal = document.getElementById('pdfPasswordModal');
+                        if (!modal.classList.contains('hidden')) {
+                            hidePasswordModal();
+                            currentPasswordFile = null;
+                            location.reload();
+                        }
+                    }
+                });
+            }
+
+            // Manejar envío de contraseña desde landing
+            async function handlePasswordSubmitFromLanding() {
+                const passwordInput = document.getElementById('pdfPasswordInput');
+                const errorDiv = document.getElementById('passwordError');
+                const submitBtn = document.getElementById('submitPasswordBtn');
+                const submitText = document.getElementById('submitPasswordText');
+                const submitSpinner = document.getElementById('submitPasswordSpinner');
+
+                const password = passwordInput.value.trim();
+
+                if (!password) {
+                    errorDiv.textContent = 'Por favor ingresa una contraseña';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+
+                // Mostrar loading en el botón
+                submitBtn.disabled = true;
+                submitText.textContent = 'Verificando...';
+                submitSpinner.classList.remove('hidden');
+                errorDiv.classList.add('hidden');
+
+                try {
+                    // Ocultar modal
+                    hidePasswordModal();
+
+                    // Mostrar loading en hero nuevamente
+                    heroDropZone.innerHTML = `
+                        <div class="text-6xl mb-6">
+                            <i class="fas fa-spinner fa-spin text-white/80"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-4">
+                            Analizando tu estado de cuenta...
+                        </h3>
+                        <div class="bg-white/20 rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between text-white">
+                                <span id="processStep">📄 Leyendo PDF...</span>
+                                <span id="processPercent">0%</span>
+                            </div>
+                            <div class="w-full bg-white/30 rounded-full h-2 mt-2">
+                                <div id="processBar" class="bg-white h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <p class="text-indigo-200 text-sm">
+                            Tu archivo se procesa de forma segura en tu navegador
+                        </p>
+                    `;
+
+                    // Procesar archivo con contraseña
+                    await processFileWithLandingFeedback(currentPasswordFile, password);
+
+                } catch (error) {
+                    console.error('Error con contraseña:', error);
+
+                    // Mostrar modal de nuevo con error
+                    showPasswordModalFromLanding(currentPasswordFile);
+                    errorDiv.textContent = 'Contraseña incorrecta. Por favor intenta de nuevo.';
+                    errorDiv.classList.remove('hidden');
+                } finally {
+                    // Restaurar botón
+                    submitBtn.disabled = false;
+                    submitText.textContent = 'Desbloquear';
+                    submitSpinner.classList.add('hidden');
+                }
+            }
+
+            // Función para ocultar modal
+            function hidePasswordModal() {
+                const modal = document.getElementById('pdfPasswordModal');
+                modal.classList.add('hidden');
             }
         });
 
