@@ -642,23 +642,6 @@
 
     <!-- App Section (Hidden initially) -->
     <div id="appSection" class="hidden min-h-screen bg-gray-50">
-        <!-- Navigation de la App -->
-        <nav class="bg-white shadow-sm border-b">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
-                    <button onclick="showLanding()" class="flex items-center space-x-2 text-gray-700 hover:text-indigo-600 transition-colors">
-                        <i class="fas fa-arrow-left"></i>
-                        <span class="font-bold text-xl text-gray-900">TeCuadra</span>
-                    </button>
-                    <div class="flex items-center space-x-4">
-                        <button onclick="showLanding()" class="text-gray-700 hover:text-indigo-600 transition-colors">
-                            <i class="fas fa-home mr-2"></i>Volver al Inicio
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </nav>
-
         <div id="app" class="pt-4">
             <!-- La aplicación se renderizará aquí -->
         </div>
@@ -809,6 +792,35 @@
             // Ocultar sección de la app
             document.getElementById('appSection').classList.add('hidden');
             appState.currentView = 'landing';
+
+            // Restaurar el drop zone a su estado original
+            const heroDropZone = document.getElementById('heroDropZone');
+            if (heroDropZone) {
+                heroDropZone.innerHTML = `
+                    <div class="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fas fa-cloud-upload-alt text-white/80"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-3">
+                        ¿Te Cuadra tu Estado de Cuenta?
+                    </h3>
+                    <p class="text-indigo-100 mb-4 text-lg">
+                        Arrastra tu PDF aquí o haz click para subir
+                    </p>
+                    <div class="text-indigo-200 text-sm">
+                        <i class="fas fa-shield-alt mr-2"></i>
+                        Tu archivo se procesa en tu computador • 100% privado
+                    </div>
+                    <input type="file" id="heroFileInput" accept=".pdf" class="hidden">
+                `;
+
+                // Reconfigurar listeners del drop zone después de restaurar el HTML
+                if (typeof setupHeroDropZoneListeners === 'function') {
+                    setupHeroDropZoneListeners();
+                }
+            }
+
+            // Scroll al inicio de la página
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         // Smooth scrolling for anchor links
@@ -860,50 +872,55 @@
                 });
             });
 
-            // Configurar Drop Zone en Hero
-            const heroDropZone = document.getElementById('heroDropZone');
-            const heroFileInput = document.getElementById('heroFileInput');
+            // Función para configurar listeners del hero drop zone
+            function setupHeroDropZoneListeners() {
+                const heroDropZone = document.getElementById('heroDropZone');
+                const heroFileInput = document.getElementById('heroFileInput');
 
-            if (heroDropZone && heroFileInput) {
-                // Click en drop zone abre selector de archivos
-                heroDropZone.addEventListener('click', () => {
-                    heroFileInput.click();
-                });
+                if (heroDropZone && heroFileInput) {
+                    // Click en drop zone abre selector de archivos
+                    heroDropZone.addEventListener('click', () => {
+                        heroFileInput.click();
+                    });
 
-                // Drag and drop functionality
-                heroDropZone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    heroDropZone.classList.add('bg-white/30');
-                    heroDropZone.style.transform = 'scale(1.02)';
-                });
+                    // Drag and drop functionality
+                    heroDropZone.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        heroDropZone.classList.add('bg-white/30');
+                        heroDropZone.style.transform = 'scale(1.02)';
+                    });
 
-                heroDropZone.addEventListener('dragleave', (e) => {
-                    e.preventDefault();
-                    heroDropZone.classList.remove('bg-white/30');
-                    heroDropZone.style.transform = 'scale(1)';
-                });
+                    heroDropZone.addEventListener('dragleave', (e) => {
+                        e.preventDefault();
+                        heroDropZone.classList.remove('bg-white/30');
+                        heroDropZone.style.transform = 'scale(1)';
+                    });
 
-                heroDropZone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    heroDropZone.classList.remove('bg-white/30');
-                    heroDropZone.style.transform = 'scale(1)';
+                    heroDropZone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        heroDropZone.classList.remove('bg-white/30');
+                        heroDropZone.style.transform = 'scale(1)';
 
-                    const files = e.dataTransfer.files;
-                    if (files.length > 0 && files[0].type === 'application/pdf') {
-                        // Procesar archivo directamente
-                        processHeroFile(files[0]);
-                    } else {
-                        alert('Por favor sube un archivo PDF válido');
-                    }
-                });
+                        const files = e.dataTransfer.files;
+                        if (files.length > 0 && files[0].type === 'application/pdf') {
+                            // Procesar archivo directamente
+                            processHeroFile(files[0]);
+                        } else {
+                            alert('Por favor sube un archivo PDF válido');
+                        }
+                    });
 
-                // File input change
-                heroFileInput.addEventListener('change', (e) => {
-                    if (e.target.files.length > 0) {
-                        processHeroFile(e.target.files[0]);
-                    }
-                });
+                    // File input change
+                    heroFileInput.addEventListener('change', (e) => {
+                        if (e.target.files.length > 0) {
+                            processHeroFile(e.target.files[0]);
+                        }
+                    });
+                }
             }
+
+            // Configurar Drop Zone en Hero
+            setupHeroDropZoneListeners();
 
             // Función para procesar archivo desde hero
             async function processHeroFile(file) {

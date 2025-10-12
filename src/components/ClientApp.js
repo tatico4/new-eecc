@@ -2611,28 +2611,34 @@ class ClientApp {
             this.state.uploadProgress = 0;
             this.state.uploadMessage = '';
 
-            // Limpiar UI
-            const uploadMessage = document.querySelector('#uploadMessage');
-            if (uploadMessage) {
-                uploadMessage.innerHTML = '';
-                uploadMessage.className = 'mt-4';
+            console.log('🧹 Análisis anterior limpiado, volviendo a la landing');
+
+            // Si existe la función showLanding (desde index.html), volver a la landing
+            if (typeof showLanding === 'function') {
+                showLanding();
+            } else {
+                // Fallback: comportamiento anterior
+                // Limpiar UI
+                const uploadMessage = document.querySelector('#uploadMessage');
+                if (uploadMessage) {
+                    uploadMessage.innerHTML = '';
+                    uploadMessage.className = 'mt-4';
+                }
+
+                // Resetear input de archivo
+                const fileInput = document.getElementById('fileInput');
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+
+                // Ocultar botones de navegación
+                this.hideNavButtons(true);
+
+                // Volver a vista de upload
+                this.switchView('upload');
+
+                this.showMessage('info', '🔄 Listo para un nuevo análisis');
             }
-
-            // Resetear input de archivo
-            const fileInput = document.getElementById('fileInput');
-            if (fileInput) {
-                fileInput.value = '';
-            }
-
-            // Ocultar botones de navegación
-            this.hideNavButtons(true);
-
-            // Volver a vista de upload
-            this.switchView('upload');
-
-            this.showMessage('info', '🔄 Listo para un nuevo análisis');
-
-            console.log('🧹 Análisis anterior limpiado, listo para nuevo archivo');
         }
     }
 
