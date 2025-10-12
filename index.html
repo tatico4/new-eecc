@@ -3,8 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analiza tus Gastos de Forma Inteligente | Sistema EECC</title>
-    <meta name="description" content="Descubre hacia dónde va tu dinero con nuestro sistema inteligente de análisis de estados de cuenta. Fácil, seguro y gratis.">
+    <title>¿Te Cuadran tus Gastos? | TeCuadra - Análisis Financiero Inteligente</title>
+    <meta name="description" content="¿Te cuadra en qué gastas tu plata? Descubre hacia dónde va tu dinero con TeCuadra, la forma más fácil y segura de analizar tus estados de cuenta. 100% gratis y privado.">
+    <meta name="keywords" content="tecuadra, estado de cuenta chile, banco falabella, banco santander, análisis financiero chile, finanzas personales chile, gastos chile, plata chile">
+    <meta name="author" content="TeCuadra">
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="¿Te Cuadra en qué gastas tu plata? | TeCuadra Chile">
+    <meta property="og:description" content="Traduce los códigos brigidos de tu estado de cuenta al chileno. Cacha dónde se va tu lucas y qué comisiones te cobran. 100% gratis.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tecuadra.cl/">
+    <meta property="og:image" content="https://tecuadra.cl/images/og-tecuadra.png">
+    <meta property="og:locale" content="es_CL">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="¿Te Cuadra en qué gastas tu plata? | TeCuadra Chile">
+    <meta name="twitter:description" content="Traduce los códigos brigidos de tu estado de cuenta al chileno. Cacha dónde se va tu lucas 100% gratis.">
+    <meta name="twitter:image" content="https://tecuadra.cl/images/twitter-tecuadra.png">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://tecuadra.cl/">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -99,8 +118,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-2">
-                    <i class="fas fa-chart-line text-2xl text-indigo-600"></i>
-                    <span class="font-bold text-xl text-gray-900">AnalisisEC</span>
+                    <i class="fas fa-check-circle text-2xl text-indigo-600"></i>
+                    <span class="font-bold text-xl text-gray-900">TeCuadra</span>
                 </div>
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="#beneficios" class="text-gray-700 hover:text-indigo-600 transition-colors">Beneficios</a>
@@ -125,25 +144,42 @@
             <div class="lg:grid lg:grid-cols-12 lg:gap-8">
                 <div class="lg:col-span-6 lg:text-left text-center">
                     <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-                        ¿Te perdiste en tu <span class="text-yellow-300">estado de cuenta</span> otra vez?
+                        ¿Te cuadra en qué <span class="text-yellow-300">gastas tu plata</span>?
                     </h1>
                     <p class="text-xl text-indigo-100 mb-8 max-w-2xl">
-                        Sabemos que es frustrante no entender en qué gastas tu plata. Te ayudamos a descifrar
-                        esos códigos raros, comisiones ocultas y gastos que no recuerdas. ¡Sin matemáticas complicadas!
+                        Si no te cuadra dónde se va tu plata, TeCuadra te ayuda a descifrar
+                        esos códigos raros, comisiones ocultas y gastos que no cachai. ¡100% gratis y en chileno!
                     </p>
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                        <a href="#" onclick="startAnalysis()" class="bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors pulse-button">
-                            <i class="fas fa-rocket mr-2"></i>
-                            Analizar mi Estado de Cuenta
-                        </a>
-                        <button onclick="scrollTo('#demo')" class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors">
-                            <i class="fas fa-play mr-2"></i>
-                            Ver Demo
+                    <!-- Drop Zone Principal -->
+                    <div class="mb-6">
+                        <div id="heroDropZone" class="bg-white/10 backdrop-blur-sm border-2 border-dashed border-white/50 rounded-2xl p-8 text-center hover:bg-white/20 transition-all duration-300 cursor-pointer group">
+                            <div class="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                                <i class="fas fa-cloud-upload-alt text-white/80"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-white mb-3">
+                                ¿Te Cuadra tu Estado de Cuenta?
+                            </h3>
+                            <p class="text-indigo-100 mb-4 text-lg">
+                                Arrastra tu PDF aquí o haz click para subir
+                            </p>
+                            <div class="text-indigo-200 text-sm">
+                                <i class="fas fa-shield-alt mr-2"></i>
+                                Tu archivo se procesa en tu computador • 100% privado
+                            </div>
+                            <input type="file" id="heroFileInput" accept=".pdf" class="hidden">
+                        </div>
+                    </div>
+
+                    <!-- Botón alternativo para usuarios que prefieren botones -->
+                    <div class="text-center">
+                        <button onclick="document.getElementById('heroFileInput').click()" class="bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors inline-flex items-center">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            O haz click aquí para subir
                         </button>
                     </div>
                     <div class="mt-8 flex items-center justify-center lg:justify-start text-indigo-100">
-                        <i class="fas fa-heart mr-2"></i>
-                        <span>Te ayudamos gratis • Sin complicaciones • Tu información queda en tu computador</span>
+                        <i class="fas fa-check-circle mr-2"></i>
+                        <span>100% gratis • Sin webeo • Tu plata queda en tu compu</span>
                     </div>
                 </div>
                 <div class="lg:col-span-6 mt-12 lg:mt-0">
@@ -203,11 +239,11 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16 fade-in">
                 <h2 class="text-4xl font-bold text-gray-900 mb-4">
-                    Entendemos tu frustración con las finanzas
+                    ¿No te cuadra qué hace tu banco con tus gastos?
                 </h2>
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                    Los estados de cuenta son confusos y los bancos no te explican nada.
-                    Creamos esta herramienta para traducir toda esa información complicada a algo que puedas entender fácilmente.
+                    Los estados de cuenta son pura letra china y los bancos no te explican ni una.
+                    TeCuadra traduce toda esa información al chileno para que le achuntes altiro.
                 </p>
             </div>
 
@@ -217,13 +253,13 @@
                     <div class="feature-gradient w-16 h-16 rounded-xl flex items-center justify-center mb-6">
                         <i class="fas fa-lightbulb text-2xl text-white"></i>
                     </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Traducimos los códigos raros</h3>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Te traducimos los códigos brigidos</h3>
                     <p class="text-gray-600 mb-4">
-                        ¿Qué significa "TRF BCO FALABELLA"? ¿O "PAC SEG DESGRAVAMEN"? Te explicamos en palabras
-                        simples todos esos códigos que aparecen en tu estado de cuenta y que nadie entiende.
+                        ¿Qué onda con "TRF BCO FALABELLA"? ¿O "PAC SEG DESGRAVAMEN"? Te explicamos en cristiano
+                        todos esos códigos raros que aparecen en tu cartola y que nadie cacha.
                     </p>
                     <div class="text-indigo-600 font-medium">
-                        <i class="fas fa-search mr-2"></i>
+                        <i class="fas fa-check-circle mr-2"></i>
                         Ya no más confusión
                     </div>
                 </div>
@@ -233,13 +269,13 @@
                     <div class="security-gradient w-16 h-16 rounded-xl flex items-center justify-center mb-6">
                         <i class="fas fa-dollar-sign text-2xl text-white"></i>
                     </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Descubre dónde se va tu plata</h3>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Cacha dónde se va tu lucas</h3>
                     <p class="text-gray-600 mb-4">
-                        ¿Sientes que tu sueldo se esfuma? Te mostramos exactamente en qué gastas para que puedas
-                        decidir si vale la pena o no. Muchos se sorprenden de cuánto gastan en delivery sin darse cuenta.
+                        ¿Cachái que tu sueldo se esfuma? Te mostramos altiro en qué gastas para que
+                        decidai si vale la pena o no. Muchos se quedan raja de cuánta plata gastan en delivery sin cachar.
                     </p>
                     <div class="text-indigo-600 font-medium">
-                        <i class="fas fa-eye mr-2"></i>
+                        <i class="fas fa-check-circle mr-2"></i>
                         Ver mis gastos reales
                     </div>
                 </div>
@@ -316,11 +352,11 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16 fade-in">
                 <h2 class="text-4xl font-bold text-gray-900 mb-4">
-                    Es tan fácil que hasta tu abuela podría usarlo
+                    Tan fácil que hasta tu tata podría usarlo
                 </h2>
                 <p class="text-xl text-gray-600">
-                    Sabemos que la tecnología a veces complica las cosas. Por eso lo hicimos súper simple.
-                    Solo 3 pasos y chao frustración.
+                    Cachamos que la tecnología a veces complica la cosa. Por eso lo hicimos súper simple.
+                    Solo 3 pasos y chao frustración, compadre.
                 </p>
             </div>
 
@@ -541,8 +577,8 @@
             </p>
             <div class="fade-in">
                 <button id="startAnalysisBtn" class="bg-white text-indigo-600 px-12 py-6 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors inline-flex items-center pulse-button">
-                    <i class="fas fa-chart-line mr-3 text-xl"></i>
-                    Analizar mi Estado de Cuenta Gratis
+                    <i class="fas fa-check-circle mr-3 text-xl"></i>
+                    ¿Te Cuadra tu Estado de Cuenta? - Gratis
                 </button>
             </div>
             <div class="mt-6 text-indigo-100 fade-in">
@@ -560,7 +596,7 @@
                 <div class="flex justify-between items-center h-16">
                     <button onclick="showLanding()" class="flex items-center space-x-2 text-gray-700 hover:text-indigo-600 transition-colors">
                         <i class="fas fa-arrow-left"></i>
-                        <span class="font-bold text-xl text-gray-900">AnalisisEC</span>
+                        <span class="font-bold text-xl text-gray-900">TeCuadra</span>
                     </button>
                     <div class="flex items-center space-x-4">
                         <button onclick="showLanding()" class="text-gray-700 hover:text-indigo-600 transition-colors">
@@ -634,12 +670,12 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div class="col-span-2">
                     <div class="flex items-center space-x-2 mb-4">
-                        <i class="fas fa-chart-line text-2xl text-indigo-400"></i>
-                        <span class="font-bold text-xl">AnalisisEC</span>
+                        <i class="fas fa-check-circle text-2xl text-indigo-400"></i>
+                        <span class="font-bold text-xl">TeCuadra</span>
                     </div>
                     <p class="text-gray-300 mb-4 max-w-md">
-                        La herramienta más fácil y segura para analizar tus estados de cuenta y
-                        entender tus patrones de gasto.
+                        La forma más fácil de entender en qué gastas tu plata.
+                        Traduce los códigos brigidos de tu estado de cuenta al chileno.
                     </p>
                     <div class="flex space-x-4">
                         <a href="#" class="text-gray-400 hover:text-white transition-colors">
@@ -658,7 +694,6 @@
                     <h3 class="font-semibold mb-4">Herramientas</h3>
                     <ul class="space-y-2 text-gray-300">
                         <li><a href="#" onclick="startAnalysis()" class="hover:text-white transition-colors">Analizar PDF</a></li>
-                        <li><a href="admin.html" class="hover:text-white transition-colors">Panel Admin</a></li>
                         <li><a href="#" class="hover:text-white transition-colors">API (Próximamente)</a></li>
                     </ul>
                 </div>
@@ -675,7 +710,7 @@
             </div>
 
             <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-                <p>&copy; 2024 AnalisisEC. Hecho con ❤️ en Chile para ayudarte con tus finanzas.</p>
+                <p>&copy; 2024 TeCuadra. Hecho con ❤️ en Chile para que cachis en qué gastas tu plata.</p>
             </div>
         </div>
     </footer>
@@ -745,7 +780,10 @@
             });
 
             // Mostrar sección de la app
-            document.getElementById('appSection').classList.remove('hidden');
+            const appSection = document.getElementById('appSection');
+            appSection.classList.remove('hidden');
+            // IMPORTANTE: Limpiar cualquier estilo inline de display
+            appSection.style.display = '';
 
             // Inicializar ClientApp si no existe
             if (!appState.clientApp) {
@@ -821,6 +859,178 @@
                     startAnalysis();
                 });
             });
+
+            // Configurar Drop Zone en Hero
+            const heroDropZone = document.getElementById('heroDropZone');
+            const heroFileInput = document.getElementById('heroFileInput');
+
+            if (heroDropZone && heroFileInput) {
+                // Click en drop zone abre selector de archivos
+                heroDropZone.addEventListener('click', () => {
+                    heroFileInput.click();
+                });
+
+                // Drag and drop functionality
+                heroDropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    heroDropZone.classList.add('bg-white/30');
+                    heroDropZone.style.transform = 'scale(1.02)';
+                });
+
+                heroDropZone.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    heroDropZone.classList.remove('bg-white/30');
+                    heroDropZone.style.transform = 'scale(1)';
+                });
+
+                heroDropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    heroDropZone.classList.remove('bg-white/30');
+                    heroDropZone.style.transform = 'scale(1)';
+
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0 && files[0].type === 'application/pdf') {
+                        // Procesar archivo directamente
+                        processHeroFile(files[0]);
+                    } else {
+                        alert('Por favor sube un archivo PDF válido');
+                    }
+                });
+
+                // File input change
+                heroFileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        processHeroFile(e.target.files[0]);
+                    }
+                });
+            }
+
+            // Función para procesar archivo desde hero
+            async function processHeroFile(file) {
+                // Mostrar loading en el drop zone (mejor diseño)
+                heroDropZone.innerHTML = `
+                    <div class="text-6xl mb-6">
+                        <i class="fas fa-spinner fa-spin text-white/80"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">
+                        Analizando tu estado de cuenta...
+                    </h3>
+                    <div class="bg-white/20 rounded-lg p-4 mb-4">
+                        <div class="flex items-center justify-between text-white">
+                            <span id="processStep">📄 Leyendo PDF...</span>
+                            <span id="processPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-white/30 rounded-full h-2 mt-2">
+                            <div id="processBar" class="bg-white h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <p class="text-indigo-200 text-sm">
+                        Tu archivo se procesa de forma segura en tu navegador
+                    </p>
+                `;
+
+                // Inicializar ClientApp en background sin cambiar la vista
+                if (!window.clientApp) {
+                    // Crear app section oculta para inicializar ClientApp
+                    document.getElementById('appSection').classList.remove('hidden');
+                    document.getElementById('appSection').style.display = 'none';
+
+                    if (!appState.clientApp) {
+                        appState.clientApp = new ClientApp();
+                    }
+                }
+
+                // Esperar a que ClientApp esté listo y procesar
+                const waitAndProcess = () => {
+                    if (window.clientApp && window.clientApp.handleFileSelection && !window.clientApp.state.isProcessing) {
+                        console.log('✅ ClientApp listo, procesando archivo desde hero...');
+
+                        // Procesar archivo con callback de progreso personalizado
+                        processFileWithLandingFeedback(file);
+                    } else {
+                        setTimeout(waitAndProcess, 100);
+                    }
+                };
+
+                setTimeout(waitAndProcess, 300);
+            }
+
+            // Función para procesar archivo con feedback en landing
+            async function processFileWithLandingFeedback(file) {
+                try {
+                    // Actualizar progreso
+                    const updateProgress = (step, percent) => {
+                        const stepEl = document.getElementById('processStep');
+                        const percentEl = document.getElementById('processPercent');
+                        const barEl = document.getElementById('processBar');
+
+                        if (stepEl) stepEl.textContent = step;
+                        if (percentEl) percentEl.textContent = percent + '%';
+                        if (barEl) barEl.style.width = percent + '%';
+                    };
+
+                    updateProgress('📄 Leyendo PDF...', 10);
+
+                    // Usar el PDFProcessor directamente para mejor control
+                    const pdfProcessor = window.clientApp.pdfProcessor;
+                    const parserFactory = window.clientApp.parserFactory;
+                    const categoryEngine = window.clientApp.categoryEngine;
+
+                    updateProgress('🔍 Procesando transacciones...', 30);
+
+                    const processed = await pdfProcessor.processFile(file, (progress, message) => {
+                        const percent = Math.min(70, 30 + (progress * 0.4));
+                        updateProgress('🔍 ' + message, percent);
+                    });
+
+                    updateProgress('📊 Analizando transacciones...', 75);
+
+                    // Parse transacciones (como hace ClientApp)
+                    const parseResult = parserFactory.processDocument(processed.text);
+                    window.clientApp.lastParseResult = parseResult;
+
+                    updateProgress('🏷️ Categorizando gastos...', 90);
+
+                    // Categorizar transacciones
+                    window.clientApp.currentTransactions = categoryEngine.categorizeMultipleTransactions(parseResult.processedTransactions);
+
+                    updateProgress('💾 Guardando resultados...', 95);
+
+                    // Guardar transacciones
+                    window.clientApp.saveTransactions();
+
+                    updateProgress('✅ ¡Listo!', 100);
+
+                    // Mostrar éxito por un momento
+                    setTimeout(() => {
+                        // Mostrar app section y ocultar landing
+                        showAppSection();
+                        // Cambiar a vista de dashboard
+                        if (window.clientApp) {
+                            window.clientApp.switchView('dashboard');
+                        }
+                    }, 800);
+
+                } catch (error) {
+                    console.error('Error procesando archivo:', error);
+
+                    // Mostrar error en landing
+                    heroDropZone.innerHTML = `
+                        <div class="text-6xl mb-4">
+                            <i class="fas fa-exclamation-triangle text-red-300"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-3">
+                            Ups, algo salió mal
+                        </h3>
+                        <p class="text-indigo-100 mb-4">
+                            ${error.message || 'Error procesando el archivo'}
+                        </p>
+                        <button onclick="location.reload()" class="bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                            Intentar de nuevo
+                        </button>
+                    `;
+                }
+            }
         });
 
         // Add smooth scroll behavior to all anchor links
