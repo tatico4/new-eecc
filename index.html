@@ -1044,22 +1044,54 @@
 
             // Función para mostrar modal de contraseña desde landing
             function showPasswordModalFromLanding(file) {
+                console.log('🔑 [MODAL DEBUG] showPasswordModalFromLanding llamado');
+                console.log('🔑 [MODAL DEBUG] Archivo:', file?.name);
+
                 currentPasswordFile = file;
                 const modal = document.getElementById('pdfPasswordModal');
                 const passwordInput = document.getElementById('pdfPasswordInput');
                 const errorDiv = document.getElementById('passwordError');
+
+                console.log('🔑 [MODAL DEBUG] Elementos encontrados:', {
+                    modal: !!modal,
+                    passwordInput: !!passwordInput,
+                    errorDiv: !!errorDiv
+                });
+
+                if (!modal || !passwordInput || !errorDiv) {
+                    console.error('🔑 [MODAL ERROR] Elementos del modal no encontrados:', {
+                        modal: modal,
+                        passwordInput: passwordInput,
+                        errorDiv: errorDiv
+                    });
+                    alert('Error: No se pudo mostrar el modal de contraseña. Por favor recarga la página.');
+                    return;
+                }
 
                 // Limpiar estado anterior
                 passwordInput.value = '';
                 errorDiv.classList.add('hidden');
                 errorDiv.textContent = '';
 
-                // Mostrar modal
+                console.log('🔑 [MODAL DEBUG] Mostrando modal...');
+
+                // Mostrar modal - asegurar que se vea
                 modal.classList.remove('hidden');
-                passwordInput.focus();
+                modal.style.display = 'block'; // Forzar display block
+                modal.style.zIndex = '9999'; // Asegurar que esté al frente
+
+                console.log('🔑 [MODAL DEBUG] Modal visible:', !modal.classList.contains('hidden'));
+                console.log('🔑 [MODAL DEBUG] Modal display:', modal.style.display);
+
+                // Hacer focus después de un pequeño delay para asegurar que el modal esté visible
+                setTimeout(() => {
+                    passwordInput.focus();
+                }, 100);
 
                 // Configurar listeners si no se han configurado
                 setupPasswordModalListenersForLanding();
+
+                console.log('🔑 [MODAL DEBUG] Modal mostrado exitosamente');
             }
 
             // Variable para evitar múltiples configuraciones de listeners
@@ -1176,7 +1208,10 @@
             // Función para ocultar modal
             function hidePasswordModal() {
                 const modal = document.getElementById('pdfPasswordModal');
-                modal.classList.add('hidden');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.style.display = ''; // Limpiar estilo inline
+                }
             }
         });
 
