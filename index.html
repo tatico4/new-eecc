@@ -1025,8 +1025,9 @@
                     setTimeout(() => {
                         // Mostrar app section y ocultar landing
                         showAppSection();
-                        // Cambiar a vista de dashboard
+                        // Mostrar botones de navegación y cambiar a dashboard
                         if (window.clientApp) {
+                            window.clientApp.hideNavButtons(false);
                             window.clientApp.switchView('dashboard');
                         }
                     }, 800);
