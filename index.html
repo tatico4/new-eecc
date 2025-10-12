@@ -588,6 +588,58 @@
         </div>
     </section>
 
+    <!-- Modal de Contraseña de PDF (Fuera de appSection para que sea visible desde landing) -->
+    <div id="pdfPasswordModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <!-- Encabezado -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                            <i class="fas fa-lock text-yellow-600 text-xl"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-lg font-medium text-gray-900">PDF Protegido</h3>
+                            <p class="text-sm text-gray-500">Este PDF requiere contraseña</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mensaje -->
+                <div class="mb-4">
+                    <p class="text-sm text-gray-700">
+                        El archivo PDF que has seleccionado está protegido con contraseña.
+                        Por favor, ingresa la contraseña para poder analizar el contenido.
+                    </p>
+                </div>
+
+                <!-- Campo de contraseña -->
+                <div class="mb-4">
+                    <label for="pdfPasswordInput" class="block text-sm font-medium text-gray-700 mb-2">
+                        Contraseña del PDF
+                    </label>
+                    <input type="password"
+                           id="pdfPasswordInput"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Ingresa la contraseña..."
+                           autocomplete="off">
+                    <div id="passwordError" class="hidden mt-2 text-sm text-red-600"></div>
+                </div>
+
+                <!-- Botones -->
+                <div class="flex items-center justify-end space-x-3">
+                    <button id="cancelPasswordBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                        Cancelar
+                    </button>
+                    <button id="submitPasswordBtn" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <span id="submitPasswordText">Desbloquear</span>
+                        <i id="submitPasswordSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- App Section (Hidden initially) -->
     <div id="appSection" class="hidden min-h-screen bg-gray-50">
         <!-- Navigation de la App -->
@@ -606,58 +658,6 @@
                 </div>
             </div>
         </nav>
-
-        <!-- Modal de Contraseña de PDF -->
-        <div id="pdfPasswordModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                <div class="mt-3">
-                    <!-- Encabezado -->
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center">
-                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
-                                <i class="fas fa-lock text-yellow-600 text-xl"></i>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-lg font-medium text-gray-900">PDF Protegido</h3>
-                                <p class="text-sm text-gray-500">Este PDF requiere contraseña</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Mensaje -->
-                    <div class="mb-4">
-                        <p class="text-sm text-gray-700">
-                            El archivo PDF que has seleccionado está protegido con contraseña.
-                            Por favor, ingresa la contraseña para poder analizar el contenido.
-                        </p>
-                    </div>
-
-                    <!-- Campo de contraseña -->
-                    <div class="mb-4">
-                        <label for="pdfPasswordInput" class="block text-sm font-medium text-gray-700 mb-2">
-                            Contraseña del PDF
-                        </label>
-                        <input type="password"
-                               id="pdfPasswordInput"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                               placeholder="Ingresa la contraseña..."
-                               autocomplete="off">
-                        <div id="passwordError" class="hidden mt-2 text-sm text-red-600"></div>
-                    </div>
-
-                    <!-- Botones -->
-                    <div class="flex items-center justify-end space-x-3">
-                        <button id="cancelPasswordBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500">
-                            Cancelar
-                        </button>
-                        <button id="submitPasswordBtn" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <span id="submitPasswordText">Desbloquear</span>
-                            <i id="submitPasswordSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <div id="app" class="pt-4">
             <!-- La aplicación se renderizará aquí -->
@@ -1044,26 +1044,15 @@
 
             // Función para mostrar modal de contraseña desde landing
             function showPasswordModalFromLanding(file) {
-                console.log('🔑 [MODAL DEBUG] showPasswordModalFromLanding llamado');
-                console.log('🔑 [MODAL DEBUG] Archivo:', file?.name);
+                console.log('🔑 [LANDING] Mostrando modal de contraseña para:', file?.name);
 
                 currentPasswordFile = file;
                 const modal = document.getElementById('pdfPasswordModal');
                 const passwordInput = document.getElementById('pdfPasswordInput');
                 const errorDiv = document.getElementById('passwordError');
 
-                console.log('🔑 [MODAL DEBUG] Elementos encontrados:', {
-                    modal: !!modal,
-                    passwordInput: !!passwordInput,
-                    errorDiv: !!errorDiv
-                });
-
                 if (!modal || !passwordInput || !errorDiv) {
-                    console.error('🔑 [MODAL ERROR] Elementos del modal no encontrados:', {
-                        modal: modal,
-                        passwordInput: passwordInput,
-                        errorDiv: errorDiv
-                    });
+                    console.error('🔑 [ERROR] Elementos del modal no encontrados');
                     alert('Error: No se pudo mostrar el modal de contraseña. Por favor recarga la página.');
                     return;
                 }
@@ -1073,17 +1062,10 @@
                 errorDiv.classList.add('hidden');
                 errorDiv.textContent = '';
 
-                console.log('🔑 [MODAL DEBUG] Mostrando modal...');
-
-                // Mostrar modal - asegurar que se vea
+                // Mostrar modal
                 modal.classList.remove('hidden');
-                modal.style.display = 'block'; // Forzar display block
-                modal.style.zIndex = '9999'; // Asegurar que esté al frente
 
-                console.log('🔑 [MODAL DEBUG] Modal visible:', !modal.classList.contains('hidden'));
-                console.log('🔑 [MODAL DEBUG] Modal display:', modal.style.display);
-
-                // Hacer focus después de un pequeño delay para asegurar que el modal esté visible
+                // Hacer focus después de un pequeño delay
                 setTimeout(() => {
                     passwordInput.focus();
                 }, 100);
@@ -1091,7 +1073,7 @@
                 // Configurar listeners si no se han configurado
                 setupPasswordModalListenersForLanding();
 
-                console.log('🔑 [MODAL DEBUG] Modal mostrado exitosamente');
+                console.log('🔑 [LANDING] Modal mostrado correctamente');
             }
 
             // Variable para evitar múltiples configuraciones de listeners
