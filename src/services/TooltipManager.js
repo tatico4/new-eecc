@@ -37,7 +37,7 @@ class TooltipManager {
      */
     async loadFromSupabase() {
         try {
-            const { data: tooltips, error } = await this.supabaseClient.client
+            const { data: tooltips, error } = await this.supabaseClient.supabase
                 .from('transaction_tooltips')
                 .select('*')
                 .eq('is_active', true);
@@ -108,8 +108,8 @@ class TooltipManager {
     async addTooltip(pattern, data) {
         try {
             // Guardar en Supabase
-            if (this.supabaseClient) {
-                const { data: result, error } = await this.supabaseClient.client
+            if (this.supabaseClient && this.supabaseClient.isConnected) {
+                const { data: result, error } = await this.supabaseClient.supabase
                     .from('transaction_tooltips')
                     .insert({
                         transaction_code: pattern.toLowerCase(),
@@ -150,8 +150,8 @@ class TooltipManager {
     async updateTooltip(pattern, data) {
         try {
             // Actualizar en Supabase si tiene ID
-            if (this.supabaseClient && data.id) {
-                const { error } = await this.supabaseClient.client
+            if (this.supabaseClient && this.supabaseClient.isConnected && data.id) {
+                const { error } = await this.supabaseClient.supabase
                     .from('transaction_tooltips')
                     .update({
                         title: data.translatedName,
@@ -191,8 +191,8 @@ class TooltipManager {
             const data = tooltips[pattern];
 
             // Eliminar de Supabase si tiene ID
-            if (this.supabaseClient && data && data.id) {
-                const { error } = await this.supabaseClient.client
+            if (this.supabaseClient && this.supabaseClient.isConnected && data && data.id) {
+                const { error } = await this.supabaseClient.supabase
                     .from('transaction_tooltips')
                     .delete()
                     .eq('id', data.id);
@@ -221,8 +221,8 @@ class TooltipManager {
      */
     async loadExceptions() {
         try {
-            if (this.supabaseClient) {
-                const { data: exceptions, error } = await this.supabaseClient.client
+            if (this.supabaseClient && this.supabaseClient.isConnected) {
+                const { data: exceptions, error } = await this.supabaseClient.supabase
                     .from('tooltip_exceptions')
                     .select('*')
                     .eq('is_active', true);
@@ -251,8 +251,8 @@ class TooltipManager {
      */
     async addException(pattern, reason = '') {
         try {
-            if (this.supabaseClient) {
-                const { error } = await this.supabaseClient.client
+            if (this.supabaseClient && this.supabaseClient.isConnected) {
+                const { error } = await this.supabaseClient.supabase
                     .from('tooltip_exceptions')
                     .insert({
                         pattern: pattern,
