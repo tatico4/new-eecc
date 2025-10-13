@@ -273,10 +273,12 @@ class AdminAuth {
      */
     async getClientIP() {
         try {
-            // En producción, esto debería venir del servidor
-            return 'client_ip';
+            // En el navegador no podemos obtener la IP real del cliente
+            // Retornar null para que PostgreSQL acepte el valor en columna INET
+            // En producción, esto debería venir del servidor/backend
+            return null;
         } catch {
-            return 'unknown';
+            return null;
         }
     }
 
