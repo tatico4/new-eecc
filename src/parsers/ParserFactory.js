@@ -8,8 +8,9 @@ class ParserFactory {
         this.availableParsers = [
             BancoFalabellaParser,
             BancoSantanderParser,
-            BancoSantanderCuentaCorrienteParser
-            // Aquí se pueden agregar más parsers: BancoChileParser, BancoEstadoParser, etc.
+            BancoSantanderCuentaCorrienteParser,
+            BancoChileParser
+            // Aquí se pueden agregar más parsers: BancoEstadoParser, BCIParser, etc.
         ];
     }
 
