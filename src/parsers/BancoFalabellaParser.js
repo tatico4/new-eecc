@@ -404,12 +404,42 @@ class BancoFalabellaParser extends AbstractBankParser {
      */
     shouldSkipLine(line) {
         const lowerLine = line.toLowerCase();
+        // Normalizar para comparación robusta (remover acentos, espacios extra, caracteres especiales)
+        const normalizedLine = lowerLine
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // Remover diacríticos
+            .replace(/\s+/g, ' ')              // Normalizar espacios
+            .trim();
 
         // PRIMERA VERIFICACIÓN: Usar RulesManager si está disponible
         if (this.rulesManager) {
             const ruleResult = this.rulesManager.shouldFilterLine(line, 'BancoFalabella');
             if (ruleResult.shouldFilter) {
                 console.log(`🎯 [RULES MANAGER] Línea filtrada por regla: "${ruleResult.rule.description}" - "${line}"`);
+                return true;
+            }
+        }
+
+        // VERIFICACIÓN PRIORITARIA: Keywords críticos de metadata (más agresivo)
+        // Estos deben verificarse ANTES de regex para evitar problemas de encoding
+        const criticalMetadataKeywords = [
+            'pagar hasta',
+            'proximo periodo',
+            'periodo a facturar',
+            'cae',
+            'tasa interes',
+            'cmr puntos',
+            'puntos acumulados',
+            'puntos por vencer',
+            'cupo total',
+            'cupo disponible',
+            'monto total facturado',
+            'monto minimo'
+        ];
+
+        for (const keyword of criticalMetadataKeywords) {
+            if (normalizedLine.includes(keyword)) {
+                console.log(`⚠️ [FALABELLA CRITICAL FILTER] Línea saltada (metadata crítico): "${line}"`);
                 return true;
             }
         }
@@ -438,7 +468,10 @@ class BancoFalabellaParser extends AbstractBankParser {
             /^\s*(t|a2)\s*$/i,
 
             // Líneas que comienzan con viñetas (bullets) - generalmente metadata
-            /^\s*[•●◦▪▫]\s*/
+            // Incluir múltiples variaciones de bullets Unicode
+            /^\s*[•●◦▪▫■□▸▹►▻⦿⦾⬤]/,
+            // También detectar línea que CONTIENE bullet seguido de texto común de metadata
+            /[•●◦▪▫]\s*(pagar|cmr|puntos|cupo|tasa|cae|periodo|período)/i
         ];
 
         // Verificar patrones de exclusión básicos
