@@ -23,6 +23,16 @@ class SupabaseClient {
     }
 
     /**
+     * Método estático para obtener la instancia global (Singleton)
+     */
+    static getInstance() {
+        if (!window.supabaseClient) {
+            window.supabaseClient = new SupabaseClient();
+        }
+        return window.supabaseClient;
+    }
+
+    /**
      * Inicializa la conexión con Supabase
      */
     async init(supabaseUrl, supabaseKey) {

@@ -178,16 +178,11 @@ class Analytics {
      */
     async sendToSupabase(event) {
         try {
-            if (!window.supabase || !CONFIG?.isSupabaseConfigured()) {
+            if (!window.supabaseClient || !window.supabaseClient.isConnected) {
                 return;
             }
 
-            const supabase = window.supabase.createClient(
-                CONFIG.supabase.url,
-                CONFIG.supabase.anonKey
-            );
-
-            await supabase.from('analytics_events').insert({
+            await window.supabaseClient.supabase.from('analytics_events').insert({
                 session_id: event.session_id,
                 event_name: event.event,
                 event_data: event.data,
@@ -205,16 +200,11 @@ class Analytics {
      */
     async sendErrorToSupabase(error) {
         try {
-            if (!window.supabase || !CONFIG?.isSupabaseConfigured()) {
+            if (!window.supabaseClient || !window.supabaseClient.isConnected) {
                 return;
             }
 
-            const supabase = window.supabase.createClient(
-                CONFIG.supabase.url,
-                CONFIG.supabase.anonKey
-            );
-
-            await supabase.from('error_logs').insert({
+            await window.supabaseClient.supabase.from('error_logs').insert({
                 session_id: error.session_id,
                 error_type: error.error_type,
                 error_data: error.data,

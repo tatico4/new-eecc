@@ -51,7 +51,7 @@ ALTER TABLE usage_metrics ENABLE ROW LEVEL SECURITY;
 
 -- 5. Políticas (acceso público para logging, lectura solo admin)
 DROP POLICY IF EXISTS "analytics_events_insert" ON analytics_events;
-CREATE POLICY "analytics_events_insert" ON analytics_events FOR INSERT USING (true);
+CREATE POLICY "analytics_events_insert" ON analytics_events FOR INSERT WITH CHECK (true);
 
 DROP POLICY IF EXISTS "analytics_events_select" ON analytics_events;
 CREATE POLICY "analytics_events_select" ON analytics_events FOR SELECT USING (
@@ -63,7 +63,7 @@ CREATE POLICY "analytics_events_select" ON analytics_events FOR SELECT USING (
 );
 
 DROP POLICY IF EXISTS "error_logs_insert" ON error_logs;
-CREATE POLICY "error_logs_insert" ON error_logs FOR INSERT USING (true);
+CREATE POLICY "error_logs_insert" ON error_logs FOR INSERT WITH CHECK (true);
 
 DROP POLICY IF EXISTS "error_logs_select" ON error_logs;
 CREATE POLICY "error_logs_select" ON error_logs FOR SELECT USING (
@@ -74,8 +74,41 @@ CREATE POLICY "error_logs_select" ON error_logs FOR SELECT USING (
     )
 );
 
-DROP POLICY IF EXISTS "usage_metrics_policy" ON usage_metrics;
-CREATE POLICY "usage_metrics_policy" ON usage_metrics FOR ALL USING (
+DROP POLICY IF EXISTS "usage_metrics_select" ON usage_metrics;
+CREATE POLICY "usage_metrics_select" ON usage_metrics FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM admin_users
+        WHERE email = current_setting('request.jwt.claims', true)::json->>'email'
+        AND is_active = true
+    )
+);
+
+DROP POLICY IF EXISTS "usage_metrics_insert" ON usage_metrics;
+CREATE POLICY "usage_metrics_insert" ON usage_metrics FOR INSERT WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM admin_users
+        WHERE email = current_setting('request.jwt.claims', true)::json->>'email'
+        AND is_active = true
+    )
+);
+
+DROP POLICY IF EXISTS "usage_metrics_update" ON usage_metrics;
+CREATE POLICY "usage_metrics_update" ON usage_metrics FOR UPDATE USING (
+    EXISTS (
+        SELECT 1 FROM admin_users
+        WHERE email = current_setting('request.jwt.claims', true)::json->>'email'
+        AND is_active = true
+    )
+) WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM admin_users
+        WHERE email = current_setting('request.jwt.claims', true)::json->>'email'
+        AND is_active = true
+    )
+);
+
+DROP POLICY IF EXISTS "usage_metrics_delete" ON usage_metrics;
+CREATE POLICY "usage_metrics_delete" ON usage_metrics FOR DELETE USING (
     EXISTS (
         SELECT 1 FROM admin_users
         WHERE email = current_setting('request.jwt.claims', true)::json->>'email'

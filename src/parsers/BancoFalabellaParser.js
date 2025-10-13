@@ -435,7 +435,10 @@ class BancoFalabellaParser extends AbstractBankParser {
 
             // Líneas con solo códigos o ubicaciones
             /^\s*(santiago|las condes|s\/i|nunoa|huechuraba)\s*$/i,
-            /^\s*(t|a2)\s*$/i
+            /^\s*(t|a2)\s*$/i,
+
+            // Líneas que comienzan con viñetas (bullets) - generalmente metadata
+            /^\s*[•●◦▪▫]\s*/
         ];
 
         // Verificar patrones de exclusión básicos
@@ -460,7 +463,34 @@ class BancoFalabellaParser extends AbstractBankParser {
             'www.',
             'http',
             'email',
-            '@'
+            '@',
+            'pagar hasta',
+            'cmr puntos',
+            'puntos acumulados',
+            'puntos por vencer',
+            'tasa interés',
+            'tasa de interés',
+            'cae ',
+            'período facturado',
+            'período de facturación',
+            'período a facturar',
+            'próximo período',
+            'cupo total',
+            'cupo disponible',
+            'cupo utilizado',
+            'cupo avance',
+            'cupo súper avance',
+            'cupo compras',
+            'monto total facturado',
+            'monto mínimo',
+            'total a pagar',
+            'fecha vencimiento',
+            'fecha facturación',
+            'estado de cuenta',
+            'cupón de pago',
+            'nombre del titular',
+            'número de tarjeta',
+            'tarjeta de crédito'
         ];
 
         for (const keyword of skipKeywords) {
