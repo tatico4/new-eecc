@@ -9,6 +9,8 @@ class ClientApp {
         this.categoryEngine = new CategoryEngine();
         this.pdfProcessor = new PDFProcessor();
         this.rulesManager = null;
+        this.tooltipManager = null;
+        this.customExplanations = {};
 
         // Estado de la aplicación
         this.state = {
@@ -48,6 +50,9 @@ class ClientApp {
         // Inicializar RulesManager para filtrado avanzado
         await this.initializeRulesManager();
 
+        // Inicializar TooltipManager para tooltips desde Supabase
+        await this.initializeTooltipManager();
+
         console.log('🚀 Sistema de Análisis Financiero Inteligente iniciado');
         console.log('📊 Bancos soportados:', this.parserFactory.getSupportedBanks());
     }
@@ -66,6 +71,25 @@ class ClientApp {
             }
         } catch (error) {
             console.warn('⚠️ Error inicializando RulesManager:', error);
+        }
+    }
+
+    /**
+     * Inicializa el TooltipManager para tooltips desde Supabase
+     */
+    async initializeTooltipManager() {
+        try {
+            if (typeof TooltipManager !== 'undefined') {
+                this.tooltipManager = new TooltipManager();
+                this.customExplanations = await this.tooltipManager.loadTooltips();
+                console.log(`✅ TooltipManager inicializado con ${Object.keys(this.customExplanations).length} tooltips`);
+            } else {
+                console.warn('⚠️ TooltipManager no está disponible, usando localStorage');
+                this.customExplanations = this.loadCustomExplanations();
+            }
+        } catch (error) {
+            console.warn('⚠️ Error inicializando TooltipManager:', error);
+            this.customExplanations = this.loadCustomExplanations();
         }
     }
 
@@ -2369,9 +2393,8 @@ class ClientApp {
     isSpecialTransaction(transaction) {
         const description = transaction.description.toLowerCase();
 
-        // Solo verificar explicaciones configuradas manualmente en la pestaña "💡 Explicaciones"
-        const customExplanations = this.loadCustomExplanations();
-        const hasCustom = Object.keys(customExplanations).some(pattern =>
+        // Solo verificar explicaciones configuradas (desde Supabase o localStorage)
+        const hasCustom = Object.keys(this.customExplanations).some(pattern =>
             description.includes(pattern.toLowerCase())
         );
 
@@ -2386,9 +2409,8 @@ class ClientApp {
         const original = transaction.description;
         const lower = original.toLowerCase();
 
-        // Verificar explicaciones personalizadas primero
-        const customExplanations = this.loadCustomExplanations();
-        for (const [pattern, data] of Object.entries(customExplanations)) {
+        // Verificar explicaciones personalizadas primero (desde Supabase o localStorage)
+        for (const [pattern, data] of Object.entries(this.customExplanations)) {
             if (lower.includes(pattern.toLowerCase())) {
                 return data.translatedName || original;
             }
@@ -2449,9 +2471,8 @@ class ClientApp {
     getTransactionExplanation(transaction) {
         const description = transaction.description.toLowerCase();
 
-        // Verificar explicaciones personalizadas
-        const customExplanations = this.loadCustomExplanations();
-        for (const [pattern, data] of Object.entries(customExplanations)) {
+        // Verificar explicaciones personalizadas (desde Supabase o localStorage)
+        for (const [pattern, data] of Object.entries(this.customExplanations)) {
             if (description.includes(pattern.toLowerCase())) {
                 return data.explanation || "Transacción configurada personalmente.";
             }
@@ -2508,9 +2529,8 @@ class ClientApp {
     getSpecialTransactionIcon(transaction) {
         const description = transaction.description.toLowerCase();
 
-        // Verificar íconos personalizados primero
-        const customExplanations = this.loadCustomExplanations();
-        for (const [pattern, data] of Object.entries(customExplanations)) {
+        // Verificar íconos personalizados primero (desde Supabase o localStorage)
+        for (const [pattern, data] of Object.entries(this.customExplanations)) {
             if (description.includes(pattern.toLowerCase())) {
                 return data.icon || '⭐';
             }
