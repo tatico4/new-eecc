@@ -1,6 +1,7 @@
 /**
  * CategoryEngine - Motor inteligente de categorización de transacciones
  * Categoriza transacciones basándose en keywords y patrones aprendidos
+ * v2.0 - Con soporte Supabase
  */
 class CategoryEngine {
     constructor() {
@@ -8,14 +9,82 @@ class CategoryEngine {
         this.customPatterns = new Map(); // Patrones aprendidos por el sistema de entrenamiento
         this.confidenceThreshold = 60; // Umbral mínimo de confianza para categorización automática
 
+        // Inicializar SupabaseClient
+        this.supabaseClient = null;
+        if (typeof SupabaseClient !== 'undefined') {
+            this.supabaseClient = SupabaseClient.getInstance();
+            console.log('✅ [CATEGORY] SupabaseClient inicializado');
+        } else {
+            console.warn('⚠️ [CATEGORY] SupabaseClient no disponible, usando solo localStorage');
+        }
+
         // Cargar patrones personalizados guardados
         this.loadCustomPatterns();
     }
 
     /**
-     * Carga patrones personalizados desde localStorage
+     * Carga patrones personalizados desde Supabase
      */
-    loadCustomPatterns() {
+    async loadCustomPatterns() {
+        try {
+            // Si Supabase está disponible, cargar desde allí
+            if (this.supabaseClient) {
+                console.log('📡 [CATEGORY] Cargando patrones desde Supabase...');
+                await this.loadFromSupabase();
+            } else {
+                // Fallback a localStorage
+                console.log('📂 [CATEGORY] Cargando patrones desde localStorage (fallback)...');
+                await this.loadFromLocalStorage();
+            }
+        } catch (error) {
+            console.warn('⚠️ Error cargando patrones personalizados:', error);
+            // Intentar fallback a localStorage si Supabase falla
+            await this.loadFromLocalStorage();
+        }
+    }
+
+    /**
+     * Carga patrones desde Supabase
+     */
+    async loadFromSupabase() {
+        try {
+            const { data: patterns, error } = await this.supabaseClient.client
+                .from('custom_categorization_patterns')
+                .select('*')
+                .eq('is_active', true);
+
+            if (error) {
+                console.error('Error cargando patrones de Supabase:', error);
+                throw error;
+            }
+
+            if (patterns && patterns.length > 0) {
+                for (const pattern of patterns) {
+                    this.customPatterns.set(pattern.pattern.toLowerCase(), {
+                        id: pattern.id,
+                        category: pattern.category_code,
+                        confidence: parseFloat(pattern.confidence) || 0.95,
+                        source: pattern.source || 'admin',
+                        addedDate: pattern.created_at,
+                        description: pattern.description
+                    });
+                }
+                console.log(`✅ [CATEGORY] ${patterns.length} patrones cargados desde Supabase`);
+            }
+
+            // Cache local para fallback
+            this.saveToLocalStorageCache();
+
+        } catch (error) {
+            console.error('❌ Error cargando desde Supabase:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Carga patrones desde localStorage (fallback)
+     */
+    async loadFromLocalStorage() {
         try {
             // Cargar patrones de categorización personalizados
             const savedPatterns = localStorage.getItem('categoryEngine_customPatterns');
@@ -24,7 +93,7 @@ class CategoryEngine {
                 for (const [pattern, categoryInfo] of Object.entries(patternsData)) {
                     this.customPatterns.set(pattern, categoryInfo);
                 }
-                console.log(`✅ Cargados ${this.customPatterns.size} patrones personalizados`);
+                console.log(`✅ Cargados ${this.customPatterns.size} patrones desde localStorage`);
             }
 
             // También cargar keywords dinámicas del admin si existen
@@ -43,24 +112,32 @@ class CategoryEngine {
                 console.log(`✅ Cargadas keywords dinámicas del admin`);
             }
         } catch (error) {
-            console.warn('⚠️ Error cargando patrones personalizados:', error);
+            console.warn('⚠️ Error cargando desde localStorage:', error);
         }
     }
 
     /**
-     * Guarda patrones personalizados en localStorage
+     * Guarda caché local para fallback
      */
-    saveCustomPatterns() {
+    saveToLocalStorageCache() {
         try {
             const patternsObject = {};
             for (const [pattern, categoryInfo] of this.customPatterns) {
                 patternsObject[pattern] = categoryInfo;
             }
             localStorage.setItem('categoryEngine_customPatterns', JSON.stringify(patternsObject));
-            console.log(`💾 Guardados ${this.customPatterns.size} patrones personalizados`);
+            console.log(`💾 Cache local guardado (${this.customPatterns.size} patrones)`);
         } catch (error) {
-            console.warn('⚠️ Error guardando patrones personalizados:', error);
+            console.warn('⚠️ Error guardando cache local:', error);
         }
+    }
+
+    /**
+     * Guarda patrones personalizados (deprecated - usar addCustomPattern)
+     */
+    saveCustomPatterns() {
+        // Solo guardar cache local
+        this.saveToLocalStorageCache();
     }
 
     /**
@@ -369,19 +446,52 @@ class CategoryEngine {
      * @param {string} category - Categoría a asignar
      * @param {string} source - Fuente del aprendizaje
      */
-    addCustomPattern(pattern, category, source = 'admin') {
+    async addCustomPattern(pattern, category, source = 'admin') {
         if (!pattern || !category || !isValidCategory(category)) {
             throw new Error('Patrón o categoría inválidos');
         }
 
-        this.customPatterns.set(pattern.toLowerCase(), {
+        const patternData = {
             category: category,
             source: source,
             addedDate: new Date().toISOString()
-        });
+        };
 
-        // Guardar en localStorage
-        this.saveCustomPatterns();
+        // Agregar a mapa local
+        this.customPatterns.set(pattern.toLowerCase(), patternData);
+
+        // Guardar en Supabase
+        if (this.supabaseClient) {
+            try {
+                const { data, error } = await this.supabaseClient.client
+                    .from('custom_categorization_patterns')
+                    .insert({
+                        pattern: pattern.toLowerCase(),
+                        category_code: category,
+                        confidence: 0.95,
+                        case_sensitive: false,
+                        source: source,
+                        description: `Patrón personalizado: ${pattern}`,
+                        created_by: 'admin'
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error('❌ Error guardando patrón en Supabase:', error);
+                } else {
+                    // Actualizar con ID de Supabase
+                    patternData.id = data.id;
+                    this.customPatterns.set(pattern.toLowerCase(), patternData);
+                    console.log(`✅ [SUPABASE] Patrón guardado con ID: ${data.id}`);
+                }
+            } catch (error) {
+                console.error('❌ Error en addCustomPattern Supabase:', error);
+            }
+        }
+
+        // Guardar cache local
+        this.saveToLocalStorageCache();
 
         console.log(`✅ Patrón personalizado agregado: "${pattern}" → ${category}`);
     }

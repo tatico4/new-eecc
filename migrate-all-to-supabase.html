@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migración Completa a Supabase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-50 min-h-screen p-4">
+    <div class="max-w-6xl mx-auto bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">🚀 Migración Completa a Supabase</h1>
+
+        <div class="mb-6">
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                <p class="text-sm text-blue-700">
+                    <strong>Instrucciones:</strong><br>
+                    1. Primero ejecuta el SQL en Supabase (setup_complete_migration.sql)<br>
+                    2. Haz clic en "Cargar Datos de localStorage"<br>
+                    3. Exporta un backup (recomendado)<br>
+                    4. Ejecuta la migración
+                </p>
+            </div>
+        </div>
+
+        <!-- Estado actual -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-purple-50 p-4 rounded">
+                <p class="text-sm text-gray-600">Patrones de Categorización</p>
+                <p id="patternsCount" class="text-2xl font-bold text-purple-600">-</p>
+            </div>
+            <div class="bg-green-50 p-4 rounded">
+                <p class="text-sm text-gray-600">Tooltips</p>
+                <p id="tooltipsCount" class="text-2xl font-bold text-green-600">-</p>
+            </div>
+            <div class="bg-orange-50 p-4 rounded">
+                <p class="text-sm text-gray-600">Excepciones</p>
+                <p id="exceptionsCount" class="text-2xl font-bold text-orange-600">-</p>
+            </div>
+            <div class="bg-blue-50 p-4 rounded">
+                <p class="text-sm text-gray-600">Training Sessions</p>
+                <p id="trainingCount" class="text-2xl font-bold text-blue-600">-</p>
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="space-y-4 mb-6">
+            <button id="loadDataBtn" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                1️⃣ Cargar datos de localStorage
+            </button>
+
+            <button id="exportBackupBtn" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold" disabled>
+                2️⃣ Exportar Backup (Recomendado)
+            </button>
+
+            <button id="migrateAllBtn" class="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold text-lg" disabled>
+                3️⃣ MIGRAR TODO A SUPABASE
+            </button>
+        </div>
+
+        <!-- Progreso de migración -->
+        <div id="progressSection" class="hidden mb-6">
+            <h2 class="text-xl font-semibold mb-4">Progreso de Migración</h2>
+            <div class="space-y-2">
+                <div class="flex items-center">
+                    <div class="w-48">Patrones de Categorización:</div>
+                    <div class="flex-1 bg-gray-200 rounded-full h-4">
+                        <div id="progressPatterns" class="bg-purple-600 h-4 rounded-full transition-all" style="width: 0%"></div>
+                    </div>
+                    <span id="statusPatterns" class="ml-4">⏳</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-48">Tooltips:</div>
+                    <div class="flex-1 bg-gray-200 rounded-full h-4">
+                        <div id="progressTooltips" class="bg-green-600 h-4 rounded-full transition-all" style="width: 0%"></div>
+                    </div>
+                    <span id="statusTooltips" class="ml-4">⏳</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-48">Excepciones:</div>
+                    <div class="flex-1 bg-gray-200 rounded-full h-4">
+                        <div id="progressExceptions" class="bg-orange-600 h-4 rounded-full transition-all" style="width: 0%"></div>
+                    </div>
+                    <span id="statusExceptions" class="ml-4">⏳</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-48">Training Sessions:</div>
+                    <div class="flex-1 bg-gray-200 rounded-full h-4">
+                        <div id="progressTraining" class="bg-blue-600 h-4 rounded-full transition-all" style="width: 0%"></div>
+                    </div>
+                    <span id="statusTraining" class="ml-4">⏳</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log -->
+        <div id="logSection" class="hidden">
+            <h2 class="text-xl font-semibold mb-4">Log de Migración</h2>
+            <div id="logContent" class="bg-gray-900 text-green-400 p-4 rounded font-mono text-sm max-h-96 overflow-y-auto"></div>
+        </div>
+
+        <!-- Preview -->
+        <div id="previewSection" class="hidden mt-6">
+            <h2 class="text-xl font-semibold mb-4">Vista Previa de Datos</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <h3 class="font-semibold mb-2">Patrones</h3>
+                    <pre id="previewPatterns" class="bg-gray-100 p-4 rounded text-xs max-h-48 overflow-y-auto"></pre>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">Tooltips</h3>
+                    <pre id="previewTooltips" class="bg-gray-100 p-4 rounded text-xs max-h-48 overflow-y-auto"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        let localData = {
+            patterns: [],
+            keywords: {},
+            tooltips: {},
+            exceptions: [],
+            trainingSessions: []
+        };
+        let supabase = null;
+
+        // Función para agregar log
+        function addLog(message, type = 'info') {
+            const logSection = document.getElementById('logSection');
+            const logContent = document.getElementById('logContent');
+            logSection.classList.remove('hidden');
+
+            const timestamp = new Date().toLocaleTimeString();
+            const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : '📝';
+            const color = type === 'error' ? 'text-red-400' : type === 'success' ? 'text-green-400' : type === 'warning' ? 'text-yellow-400' : 'text-blue-400';
+
+            logContent.innerHTML += `<div class="${color}">[${timestamp}] ${icon} ${message}</div>`;
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        // Actualizar progreso
+        function updateProgress(section, percent, status) {
+            document.getElementById(`progress${section}`).style.width = percent + '%';
+            document.getElementById(`status${section}`).textContent = status;
+        }
+
+        // Inicializar Supabase
+        if (CONFIG.isSupabaseConfigured()) {
+            supabase = window.supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.anonKey);
+            addLog('Supabase inicializado correctamente', 'success');
+        } else {
+            addLog('ERROR: Supabase no está configurado en config.js', 'error');
+        }
+
+        // Cargar datos de localStorage
+        document.getElementById('loadDataBtn').addEventListener('click', () => {
+            try {
+                // 1. Patrones de categorización personalizados
+                const patternsData = localStorage.getItem('categoryEngine_customPatterns');
+                if (patternsData) {
+                    const patterns = JSON.parse(patternsData);
+                    localData.patterns = Object.entries(patterns).map(([pattern, info]) => ({
+                        pattern,
+                        ...info
+                    }));
+                }
+
+                // 2. Keywords dinámicas
+                const keywordsData = localStorage.getItem('adminCategories_dynamicKeywords');
+                if (keywordsData) {
+                    localData.keywords = JSON.parse(keywordsData);
+                }
+
+                // 3. Tooltips
+                const tooltipsData = localStorage.getItem('financeAnalyzer_customExplanations');
+                if (tooltipsData) {
+                    localData.tooltips = JSON.parse(tooltipsData);
+                }
+
+                // 4. Excepciones de tooltips
+                const exceptionsData = localStorage.getItem('financeAnalyzer_tooltipExceptions');
+                if (exceptionsData) {
+                    localData.exceptions = JSON.parse(exceptionsData);
+                }
+
+                // 5. Training sessions
+                const trainingData = localStorage.getItem('trainingHistory');
+                if (trainingData) {
+                    localData.trainingSessions = JSON.parse(trainingData);
+                }
+
+                // Actualizar contadores
+                let totalPatterns = localData.patterns.length;
+                for (const category in localData.keywords) {
+                    totalPatterns += localData.keywords[category].length;
+                }
+
+                document.getElementById('patternsCount').textContent = totalPatterns;
+                document.getElementById('tooltipsCount').textContent = Object.keys(localData.tooltips).length;
+                document.getElementById('exceptionsCount').textContent = localData.exceptions.length;
+                document.getElementById('trainingCount').textContent = localData.trainingSessions.length;
+
+                // Mostrar preview
+                document.getElementById('previewSection').classList.remove('hidden');
+                document.getElementById('previewPatterns').textContent = JSON.stringify(localData.patterns.slice(0, 5), null, 2);
+                document.getElementById('previewTooltips').textContent = JSON.stringify(Object.entries(localData.tooltips).slice(0, 5), null, 2);
+
+                // Habilitar botones
+                document.getElementById('exportBackupBtn').disabled = false;
+                document.getElementById('migrateAllBtn').disabled = false;
+
+                addLog(`Datos cargados: ${totalPatterns} patrones, ${Object.keys(localData.tooltips).length} tooltips, ${localData.exceptions.length} excepciones, ${localData.trainingSessions.length} training sessions`, 'success');
+
+            } catch (error) {
+                addLog(`Error cargando datos: ${error.message}`, 'error');
+                console.error(error);
+            }
+        });
+
+        // Exportar backup
+        document.getElementById('exportBackupBtn').addEventListener('click', () => {
+            const backup = {
+                exportDate: new Date().toISOString(),
+                data: localData
+            };
+
+            const dataStr = JSON.stringify(backup, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `complete-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+
+            addLog('Backup completo descargado', 'success');
+        });
+
+        // Migrar todo
+        document.getElementById('migrateAllBtn').addEventListener('click', async () => {
+            if (!supabase) {
+                alert('Supabase no está configurado');
+                return;
+            }
+
+            if (!confirm('¿Estás seguro de migrar TODOS los datos a Supabase?\n\nEsto creará nuevas entradas en la base de datos.')) {
+                return;
+            }
+
+            document.getElementById('progressSection').classList.remove('hidden');
+            addLog('🚀 Iniciando migración completa...', 'info');
+
+            let totalMigrated = 0;
+
+            try {
+                // 1. Migrar patrones de categorización
+                addLog('📦 Migrando patrones de categorización...', 'info');
+                updateProgress('Patterns', 10, '⏳');
+
+                for (const pattern of localData.patterns) {
+                    try {
+                        const { error } = await supabase
+                            .from('custom_categorization_patterns')
+                            .insert({
+                                pattern: pattern.pattern,
+                                category_code: pattern.category,
+                                confidence: pattern.confidence || 0.95,
+                                case_sensitive: false,
+                                source: pattern.source || 'admin',
+                                description: `Patrón personalizado: ${pattern.pattern}`,
+                                created_by: 'migration'
+                            });
+
+                        if (error && error.code !== '23505') { // Ignorar duplicados
+                            addLog(`Error en patrón "${pattern.pattern}": ${error.message}`, 'warning');
+                        } else {
+                            totalMigrated++;
+                        }
+                    } catch (err) {
+                        addLog(`Error en patrón "${pattern.pattern}": ${err.message}`, 'error');
+                    }
+                }
+
+                // Migrar keywords dinámicas como patrones
+                for (const [category, keywords] of Object.entries(localData.keywords)) {
+                    for (const keyword of keywords) {
+                        try {
+                            const { error } = await supabase
+                                .from('custom_categorization_patterns')
+                                .insert({
+                                    pattern: keyword,
+                                    category_code: category,
+                                    confidence: 0.90,
+                                    case_sensitive: false,
+                                    source: 'admin_keywords',
+                                    description: `Keyword dinámica: ${keyword}`,
+                                    created_by: 'migration'
+                                });
+
+                            if (error && error.code !== '23505') {
+                                addLog(`Error en keyword "${keyword}": ${error.message}`, 'warning');
+                            } else {
+                                totalMigrated++;
+                            }
+                        } catch (err) {
+                            addLog(`Error en keyword "${keyword}": ${err.message}`, 'error');
+                        }
+                    }
+                }
+
+                updateProgress('Patterns', 100, '✅');
+                addLog(`✅ Patrones de categorización migrados`, 'success');
+
+                // 2. Migrar tooltips
+                addLog('📦 Migrando tooltips...', 'info');
+                updateProgress('Tooltips', 10, '⏳');
+
+                for (const [code, tooltip] of Object.entries(localData.tooltips)) {
+                    try {
+                        const { error } = await supabase
+                            .from('transaction_tooltips')
+                            .insert({
+                                transaction_code: code,
+                                title: tooltip.title || code,
+                                explanation: tooltip.explanation || tooltip.text || '',
+                                category_code: tooltip.category || null,
+                                examples: tooltip.examples || [],
+                                created_by: 'migration'
+                            });
+
+                        if (error && error.code !== '23505') {
+                            addLog(`Error en tooltip "${code}": ${error.message}`, 'warning');
+                        } else {
+                            totalMigrated++;
+                        }
+                    } catch (err) {
+                        addLog(`Error en tooltip "${code}": ${err.message}`, 'error');
+                    }
+                }
+
+                updateProgress('Tooltips', 100, '✅');
+                addLog(`✅ Tooltips migrados`, 'success');
+
+                // 3. Migrar excepciones
+                addLog('📦 Migrando excepciones de tooltips...', 'info');
+                updateProgress('Exceptions', 10, '⏳');
+
+                for (const exception of localData.exceptions) {
+                    try {
+                        const pattern = typeof exception === 'string' ? exception : exception.pattern;
+                        const { error } = await supabase
+                            .from('tooltip_exceptions')
+                            .insert({
+                                pattern: pattern,
+                                reason: exception.reason || 'Excepción migrada',
+                                created_by: 'migration'
+                            });
+
+                        if (error && error.code !== '23505') {
+                            addLog(`Error en excepción "${pattern}": ${error.message}`, 'warning');
+                        } else {
+                            totalMigrated++;
+                        }
+                    } catch (err) {
+                        addLog(`Error en excepción: ${err.message}`, 'error');
+                    }
+                }
+
+                updateProgress('Exceptions', 100, '✅');
+                addLog(`✅ Excepciones migradas`, 'success');
+
+                // 4. Migrar training sessions
+                addLog('📦 Migrando training sessions...', 'info');
+                updateProgress('Training', 10, '⏳');
+
+                for (const session of localData.trainingSessions) {
+                    try {
+                        const { error } = await supabase
+                            .from('training_sessions')
+                            .insert({
+                                session_date: session.date || new Date().toISOString(),
+                                transactions_processed: session.transactionsProcessed || 0,
+                                corrections_applied: session.correctionsApplied || 0,
+                                accuracy: session.accuracy || null,
+                                notes: session.notes || null,
+                                created_by: 'migration'
+                            });
+
+                        if (error) {
+                            addLog(`Error en training session: ${error.message}`, 'warning');
+                        } else {
+                            totalMigrated++;
+                        }
+                    } catch (err) {
+                        addLog(`Error en training session: ${err.message}`, 'error');
+                    }
+                }
+
+                updateProgress('Training', 100, '✅');
+                addLog(`✅ Training sessions migradas`, 'success');
+
+                addLog(`\n🎉 MIGRACIÓN COMPLETADA! Total de elementos migrados: ${totalMigrated}`, 'success');
+                alert(`¡Migración completada exitosamente!\n\n${totalMigrated} elementos migrados a Supabase.`);
+
+            } catch (error) {
+                addLog(`❌ Error crítico durante la migración: ${error.message}`, 'error');
+                console.error(error);
+                alert('Error durante la migración. Revisa el log para más detalles.');
+            }
+        });
+
+        // Cargar datos automáticamente al iniciar
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('loadDataBtn').click();
+        });
+    </script>
+</body>
+</html>
