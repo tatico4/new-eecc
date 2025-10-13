@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migración de Reglas a Supabase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-4xl w-full bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">🔄 Migración de Reglas a Supabase</h1>
+
+        <div class="mb-6">
+            <p class="text-gray-600 mb-4">
+                Este script migrará tus reglas de filtrado y correcciones de descripción desde localStorage a Supabase.
+            </p>
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                <p class="text-sm text-blue-700">
+                    <strong>Importante:</strong> Ejecuta este script primero en tu entorno local donde tienes las reglas guardadas,
+                    luego ejecuta el SQL en Supabase para crear las tablas.
+                </p>
+            </div>
+        </div>
+
+        <!-- Estado actual -->
+        <div id="statusSection" class="mb-6">
+            <h2 class="text-xl font-semibold mb-4">Estado Actual</h2>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="bg-gray-50 p-4 rounded">
+                    <p class="text-sm text-gray-600">Reglas de filtrado globales</p>
+                    <p id="globalRulesCount" class="text-2xl font-bold text-blue-600">-</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded">
+                    <p class="text-sm text-gray-600">Reglas por banco</p>
+                    <p id="bankRulesCount" class="text-2xl font-bold text-green-600">-</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded">
+                    <p class="text-sm text-gray-600">Correcciones globales</p>
+                    <p id="globalCorrectionsCount" class="text-2xl font-bold text-purple-600">-</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded">
+                    <p class="text-sm text-gray-600">Correcciones por banco</p>
+                    <p id="bankCorrectionsCount" class="text-2xl font-bold text-orange-600">-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="space-y-4">
+            <button id="loadDataBtn" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                1️⃣ Cargar datos de localStorage
+            </button>
+
+            <button id="exportJsonBtn" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold" disabled>
+                2️⃣ Exportar como JSON (para backup)
+            </button>
+
+            <button id="migrateBtn" class="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold" disabled>
+                3️⃣ Migrar a Supabase
+            </button>
+        </div>
+
+        <!-- Log de progreso -->
+        <div id="logSection" class="mt-6 hidden">
+            <h2 class="text-xl font-semibold mb-4">Log de Migración</h2>
+            <div id="logContent" class="bg-gray-900 text-green-400 p-4 rounded font-mono text-sm max-h-96 overflow-y-auto">
+            </div>
+        </div>
+
+        <!-- Datos para preview -->
+        <div id="previewSection" class="mt-6 hidden">
+            <h2 class="text-xl font-semibold mb-4">Vista Previa de Datos</h2>
+            <pre id="previewContent" class="bg-gray-100 p-4 rounded text-sm max-h-96 overflow-y-auto"></pre>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        let localData = null;
+        let supabase = null;
+
+        // Función para agregar log
+        function addLog(message, type = 'info') {
+            const logSection = document.getElementById('logSection');
+            const logContent = document.getElementById('logContent');
+            logSection.classList.remove('hidden');
+
+            const timestamp = new Date().toLocaleTimeString();
+            const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : '📝';
+            const color = type === 'error' ? 'text-red-400' : type === 'success' ? 'text-green-400' : 'text-blue-400';
+
+            logContent.innerHTML += `<div class="${color}">[${timestamp}] ${icon} ${message}</div>`;
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        // Inicializar Supabase
+        if (CONFIG.isSupabaseConfigured()) {
+            supabase = window.supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.anonKey);
+            addLog('Supabase inicializado correctamente', 'success');
+        } else {
+            addLog('ERROR: Supabase no está configurado en config.js', 'error');
+        }
+
+        // Cargar datos de localStorage
+        document.getElementById('loadDataBtn').addEventListener('click', () => {
+            try {
+                const configData = localStorage.getItem('parserConfig_default');
+
+                if (!configData) {
+                    addLog('No se encontraron reglas en localStorage', 'error');
+                    alert('No se encontraron reglas guardadas localmente.');
+                    return;
+                }
+
+                localData = JSON.parse(configData);
+
+                // Actualizar contadores
+                const globalRules = localData.globalRules?.length || 0;
+                let bankRules = 0;
+                for (const bank in localData.bankSpecificRules || {}) {
+                    bankRules += localData.bankSpecificRules[bank].length;
+                }
+                const globalCorrections = localData.descriptionCorrections?.global?.length || 0;
+                let bankCorrections = 0;
+                for (const bank in localData.descriptionCorrections || {}) {
+                    if (bank !== 'global') {
+                        bankCorrections += (localData.descriptionCorrections[bank]?.length || 0);
+                    }
+                }
+
+                document.getElementById('globalRulesCount').textContent = globalRules;
+                document.getElementById('bankRulesCount').textContent = bankRules;
+                document.getElementById('globalCorrectionsCount').textContent = globalCorrections;
+                document.getElementById('bankCorrectionsCount').textContent = bankCorrections;
+
+                // Mostrar preview
+                document.getElementById('previewSection').classList.remove('hidden');
+                document.getElementById('previewContent').textContent = JSON.stringify(localData, null, 2);
+
+                // Habilitar botones
+                document.getElementById('exportJsonBtn').disabled = false;
+                document.getElementById('migrateBtn').disabled = false;
+
+                addLog(`Datos cargados: ${globalRules} reglas globales, ${bankRules} reglas por banco, ${globalCorrections} correcciones globales, ${bankCorrections} correcciones por banco`, 'success');
+
+            } catch (error) {
+                addLog(`Error cargando datos: ${error.message}`, 'error');
+                console.error(error);
+            }
+        });
+
+        // Exportar como JSON
+        document.getElementById('exportJsonBtn').addEventListener('click', () => {
+            if (!localData) return;
+
+            const dataStr = JSON.stringify(localData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `rules-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+
+            addLog('Backup JSON descargado correctamente', 'success');
+        });
+
+        // Mapeo de nombres de bancos
+        const bankCodeMap = {
+            'BancoFalabella': 'BancoFalabella',
+            'Santander': 'BancoSantander',
+            'BancoChile': 'BancoChile',
+            'BCI': 'BCI',
+            'BancoEstado': 'BancoEstado',
+            'Scotiabank': 'Scotiabank'
+        };
+
+        // Obtener ID de banco por código
+        async function getBankId(bankCode) {
+            const mappedCode = bankCodeMap[bankCode] || bankCode;
+            const { data, error } = await supabase
+                .from('banks')
+                .select('id')
+                .eq('code', mappedCode)
+                .single();
+
+            if (error) {
+                addLog(`Error obteniendo banco ${mappedCode}: ${error.message}`, 'error');
+                return null;
+            }
+
+            return data?.id;
+        }
+
+        // Migrar a Supabase
+        document.getElementById('migrateBtn').addEventListener('click', async () => {
+            if (!localData || !supabase) {
+                alert('Supabase no está configurado o no hay datos cargados');
+                return;
+            }
+
+            if (!confirm('¿Estás seguro de que quieres migrar las reglas a Supabase? Esto creará nuevas entradas en la base de datos.')) {
+                return;
+            }
+
+            addLog('Iniciando migración...', 'info');
+
+            try {
+                let totalMigrated = 0;
+
+                // 1. Migrar reglas de filtrado globales
+                addLog('Migrando reglas de filtrado globales...', 'info');
+                for (const rule of localData.globalRules || []) {
+                    const { error } = await supabase
+                        .from('filtering_rules')
+                        .insert({
+                            rule_type: rule.type,
+                            text_pattern: rule.text,
+                            description: rule.description,
+                            is_active: rule.active,
+                            created_by: rule.author || 'admin'
+                        });
+
+                    if (error) {
+                        addLog(`Error en regla global "${rule.text}": ${error.message}`, 'error');
+                    } else {
+                        totalMigrated++;
+                        addLog(`✓ Regla global migrada: ${rule.description}`, 'success');
+                    }
+                }
+
+                // 2. Migrar reglas de filtrado por banco
+                addLog('Migrando reglas de filtrado por banco...', 'info');
+                for (const bankName in localData.bankSpecificRules || {}) {
+                    const bankId = await getBankId(bankName);
+                    if (!bankId) {
+                        addLog(`Banco no encontrado: ${bankName}`, 'error');
+                        continue;
+                    }
+
+                    for (const rule of localData.bankSpecificRules[bankName] || []) {
+                        const { error } = await supabase
+                            .from('filtering_rules')
+                            .insert({
+                                bank_id: bankId,
+                                rule_type: rule.type,
+                                text_pattern: rule.text,
+                                description: rule.description,
+                                is_active: rule.active,
+                                created_by: rule.author || 'admin'
+                            });
+
+                        if (error) {
+                            addLog(`Error en regla ${bankName} "${rule.text}": ${error.message}`, 'error');
+                        } else {
+                            totalMigrated++;
+                            addLog(`✓ Regla ${bankName} migrada: ${rule.description}`, 'success');
+                        }
+                    }
+                }
+
+                // 3. Migrar correcciones globales
+                addLog('Migrando correcciones globales...', 'info');
+                for (const correction of localData.descriptionCorrections?.global || []) {
+                    const { error } = await supabase
+                        .from('description_corrections')
+                        .insert({
+                            correction_type: correction.type,
+                            pattern: correction.pattern,
+                            replacement: correction.replacement,
+                            case_insensitive: correction.caseInsensitive !== false,
+                            description: correction.description,
+                            is_active: correction.active,
+                            created_by: correction.author || 'admin'
+                        });
+
+                    if (error) {
+                        addLog(`Error en corrección global "${correction.pattern}": ${error.message}`, 'error');
+                    } else {
+                        totalMigrated++;
+                        addLog(`✓ Corrección global migrada: ${correction.description}`, 'success');
+                    }
+                }
+
+                // 4. Migrar correcciones por banco
+                addLog('Migrando correcciones por banco...', 'info');
+                for (const bankName in localData.descriptionCorrections || {}) {
+                    if (bankName === 'global') continue;
+
+                    const bankId = await getBankId(bankName);
+                    if (!bankId) {
+                        addLog(`Banco no encontrado: ${bankName}`, 'error');
+                        continue;
+                    }
+
+                    for (const correction of localData.descriptionCorrections[bankName] || []) {
+                        const { error } = await supabase
+                            .from('description_corrections')
+                            .insert({
+                                bank_id: bankId,
+                                correction_type: correction.type,
+                                pattern: correction.pattern,
+                                replacement: correction.replacement,
+                                case_insensitive: correction.caseInsensitive !== false,
+                                description: correction.description,
+                                is_active: correction.active,
+                                created_by: correction.author || 'admin'
+                            });
+
+                        if (error) {
+                            addLog(`Error en corrección ${bankName} "${correction.pattern}": ${error.message}`, 'error');
+                        } else {
+                            totalMigrated++;
+                            addLog(`✓ Corrección ${bankName} migrada: ${correction.description}`, 'success');
+                        }
+                    }
+                }
+
+                addLog(`🎉 Migración completada! Total de elementos migrados: ${totalMigrated}`, 'success');
+                alert(`Migración completada exitosamente!\n\n${totalMigrated} elementos migrados a Supabase.`);
+
+            } catch (error) {
+                addLog(`Error crítico durante la migración: ${error.message}`, 'error');
+                console.error(error);
+                alert('Error durante la migración. Revisa el log para más detalles.');
+            }
+        });
+
+        // Cargar datos automáticamente al iniciar
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('loadDataBtn').click();
+        });
+    </script>
+</body>
+</html>

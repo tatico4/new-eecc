@@ -17,7 +17,7 @@ class RulesManager {
             return RulesManager.instance;
         }
 
-        console.log('🚀 Iniciando RulesManager v1.0.0');
+        console.log('🚀 Iniciando RulesManager v2.0.0 (Supabase)');
 
         this.organizationId = 'default'; // Para multi-org futuro
         this.config = null;
@@ -31,7 +31,16 @@ class RulesManager {
         };
 
         // Versión para sincronización futura
-        this.configVersion = '1.0.0';
+        this.configVersion = '2.0.0';
+
+        // Inicializar SupabaseClient
+        this.supabaseClient = null;
+        if (typeof SupabaseClient !== 'undefined') {
+            this.supabaseClient = SupabaseClient.getInstance();
+            console.log('✅ [RULES] SupabaseClient inicializado');
+        } else {
+            console.warn('⚠️ [RULES] SupabaseClient no disponible, usando solo localStorage');
+        }
 
         // Guardar instancia singleton
         RulesManager.instance = this;
@@ -60,31 +69,176 @@ class RulesManager {
     }
 
     /**
-     * Carga configuración desde storage (preparado para API futura)
+     * Carga configuración desde Supabase
      */
     async loadConfig() {
         try {
-            // Por ahora localStorage, preparado para API REST
-            const configData = localStorage.getItem(this.storageKeys.config);
-            const analyticsData = localStorage.getItem(this.storageKeys.analytics);
-
-            if (configData) {
-                this.config = JSON.parse(configData);
-                console.log('📂 Configuración cargada:', Object.keys(this.config));
+            // Si Supabase está disponible, cargar desde allí
+            if (this.supabaseClient) {
+                console.log('📡 [RULES] Cargando reglas desde Supabase...');
+                await this.loadFromSupabase();
+            } else {
+                // Fallback a localStorage
+                console.log('📂 [RULES] Cargando reglas desde localStorage (fallback)...');
+                await this.loadFromLocalStorage();
             }
 
+            // Cargar analytics (siempre desde localStorage)
+            const analyticsData = localStorage.getItem(this.storageKeys.analytics);
             if (analyticsData) {
                 this.analytics = JSON.parse(analyticsData);
                 console.log('📊 Analytics cargados');
             }
 
-            // TODO: En futuro, implementar sync con servidor
-            // await this.syncWithServer();
-
         } catch (error) {
             console.error('❌ Error cargando configuración:', error);
             this.config = null;
             this.analytics = null;
+        }
+    }
+
+    /**
+     * Carga reglas desde Supabase
+     */
+    async loadFromSupabase() {
+        try {
+            this.config = {
+                metadata: {
+                    organizationId: this.organizationId,
+                    version: this.configVersion,
+                    created: new Date().toISOString(),
+                    lastUpdated: new Date().toISOString(),
+                    source: 'supabase'
+                },
+                globalRules: [],
+                bankSpecificRules: {},
+                descriptionCorrections: {
+                    global: []
+                }
+            };
+
+            // 1. Cargar reglas de filtrado globales
+            const { data: globalFilteringRules, error: error1 } = await this.supabaseClient.client
+                .from('filtering_rules')
+                .select('*')
+                .is('bank_id', null)
+                .eq('is_active', true);
+
+            if (error1) {
+                console.error('Error cargando reglas globales:', error1);
+            } else {
+                this.config.globalRules = (globalFilteringRules || []).map(rule => ({
+                    id: rule.id,
+                    type: rule.rule_type,
+                    text: rule.text_pattern,
+                    description: rule.description,
+                    active: rule.is_active,
+                    created: rule.created_at,
+                    author: rule.created_by
+                }));
+                console.log(`✅ [RULES] ${this.config.globalRules.length} reglas globales cargadas`);
+            }
+
+            // 2. Cargar reglas de filtrado por banco
+            const { data: banks, error: error2 } = await this.supabaseClient.client
+                .from('banks')
+                .select('id, code, name');
+
+            if (error2) {
+                console.error('Error cargando bancos:', error2);
+            } else {
+                for (const bank of banks || []) {
+                    const { data: bankRules, error: error3 } = await this.supabaseClient.client
+                        .from('filtering_rules')
+                        .select('*')
+                        .eq('bank_id', bank.id)
+                        .eq('is_active', true);
+
+                    if (!error3 && bankRules && bankRules.length > 0) {
+                        this.config.bankSpecificRules[bank.code] = bankRules.map(rule => ({
+                            id: rule.id,
+                            type: rule.rule_type,
+                            text: rule.text_pattern,
+                            description: rule.description,
+                            active: rule.is_active,
+                            created: rule.created_at,
+                            author: rule.created_by
+                        }));
+                        console.log(`✅ [RULES] ${bankRules.length} reglas de ${bank.name} cargadas`);
+                    } else {
+                        this.config.bankSpecificRules[bank.code] = [];
+                    }
+                }
+            }
+
+            // 3. Cargar correcciones globales
+            const { data: globalCorrections, error: error4 } = await this.supabaseClient.client
+                .from('description_corrections')
+                .select('*')
+                .is('bank_id', null)
+                .eq('is_active', true);
+
+            if (error4) {
+                console.error('Error cargando correcciones globales:', error4);
+            } else {
+                this.config.descriptionCorrections.global = (globalCorrections || []).map(correction => ({
+                    id: correction.id,
+                    pattern: correction.pattern,
+                    replacement: correction.replacement,
+                    type: correction.correction_type,
+                    caseInsensitive: correction.case_insensitive,
+                    description: correction.description,
+                    active: correction.is_active,
+                    created: correction.created_at,
+                    author: correction.created_by
+                }));
+                console.log(`✅ [RULES] ${this.config.descriptionCorrections.global.length} correcciones globales cargadas`);
+            }
+
+            // 4. Cargar correcciones por banco
+            for (const bank of banks || []) {
+                const { data: bankCorrections, error: error5 } = await this.supabaseClient.client
+                    .from('description_corrections')
+                    .select('*')
+                    .eq('bank_id', bank.id)
+                    .eq('is_active', true);
+
+                if (!error5 && bankCorrections && bankCorrections.length > 0) {
+                    this.config.descriptionCorrections[bank.code] = bankCorrections.map(correction => ({
+                        id: correction.id,
+                        pattern: correction.pattern,
+                        replacement: correction.replacement,
+                        type: correction.correction_type,
+                        caseInsensitive: correction.case_insensitive,
+                        description: correction.description,
+                        active: correction.is_active,
+                        created: correction.created_at,
+                        author: correction.created_by
+                    }));
+                    console.log(`✅ [RULES] ${bankCorrections.length} correcciones de ${bank.name} cargadas`);
+                } else {
+                    this.config.descriptionCorrections[bank.code] = [];
+                }
+            }
+
+            console.log('✅ [RULES] Configuración cargada desde Supabase exitosamente');
+
+        } catch (error) {
+            console.error('❌ Error cargando desde Supabase:', error);
+            // Fallback a localStorage
+            await this.loadFromLocalStorage();
+        }
+    }
+
+    /**
+     * Carga reglas desde localStorage (fallback)
+     */
+    async loadFromLocalStorage() {
+        const configData = localStorage.getItem(this.storageKeys.config);
+
+        if (configData) {
+            this.config = JSON.parse(configData);
+            console.log('📂 Configuración cargada desde localStorage:', Object.keys(this.config));
         }
     }
 
@@ -289,7 +443,7 @@ class RulesManager {
     /**
      * Agrega nueva regla
      */
-    addRule(bankName, ruleData) {
+    async addRule(bankName, ruleData) {
         const rule = {
             id: this.generateRuleId(bankName),
             type: ruleData.type,
@@ -301,6 +455,7 @@ class RulesManager {
             ...ruleData
         };
 
+        // Agregar a config local (caché)
         if (bankName === 'global') {
             this.config.globalRules.push(rule);
         } else {
@@ -313,6 +468,36 @@ class RulesManager {
         this.updateMetadata();
         this.saveConfig();
 
+        // Guardar en Supabase
+        if (this.supabaseClient) {
+            try {
+                const bankId = bankName !== 'global' ? await this.getBankIdByCode(bankName) : null;
+
+                const { data, error } = await this.supabaseClient.client
+                    .from('filtering_rules')
+                    .insert({
+                        bank_id: bankId,
+                        rule_type: rule.type,
+                        text_pattern: rule.text,
+                        description: rule.description,
+                        is_active: rule.active,
+                        created_by: rule.author
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error('❌ Error guardando regla en Supabase:', error);
+                } else {
+                    // Actualizar ID local con el de Supabase
+                    rule.id = data.id;
+                    console.log(`✅ [SUPABASE] Regla guardada con ID: ${data.id}`);
+                }
+            } catch (error) {
+                console.error('❌ Error en addRule Supabase:', error);
+            }
+        }
+
         console.log(`✅ Regla agregada (${bankName}):`, rule.description);
         return rule;
     }
@@ -320,7 +505,7 @@ class RulesManager {
     /**
      * Actualiza regla existente
      */
-    updateRule(ruleId, updates) {
+    async updateRule(ruleId, updates) {
         let updated = false;
 
         // Buscar en reglas globales
@@ -345,6 +530,31 @@ class RulesManager {
         if (updated) {
             this.updateMetadata();
             this.saveConfig();
+
+            // Actualizar en Supabase
+            if (this.supabaseClient) {
+                try {
+                    const updateData = {};
+                    if (updates.type) updateData.rule_type = updates.type;
+                    if (updates.text) updateData.text_pattern = updates.text;
+                    if (updates.description) updateData.description = updates.description;
+                    if (updates.active !== undefined) updateData.is_active = updates.active;
+
+                    const { error } = await this.supabaseClient.client
+                        .from('filtering_rules')
+                        .update(updateData)
+                        .eq('id', ruleId);
+
+                    if (error) {
+                        console.error('❌ Error actualizando regla en Supabase:', error);
+                    } else {
+                        console.log(`✅ [SUPABASE] Regla actualizada: ${ruleId}`);
+                    }
+                } catch (error) {
+                    console.error('❌ Error en updateRule Supabase:', error);
+                }
+            }
+
             console.log(`✅ Regla actualizada: ${ruleId}`);
         }
 
@@ -354,7 +564,7 @@ class RulesManager {
     /**
      * Elimina regla
      */
-    deleteRule(ruleId) {
+    async deleteRule(ruleId) {
         let deleted = false;
 
         // Eliminar de reglas globales
@@ -379,10 +589,54 @@ class RulesManager {
         if (deleted) {
             this.updateMetadata();
             this.saveConfig();
+
+            // Eliminar de Supabase
+            if (this.supabaseClient) {
+                try {
+                    const { error } = await this.supabaseClient.client
+                        .from('filtering_rules')
+                        .delete()
+                        .eq('id', ruleId);
+
+                    if (error) {
+                        console.error('❌ Error eliminando regla en Supabase:', error);
+                    } else {
+                        console.log(`✅ [SUPABASE] Regla eliminada: ${ruleId}`);
+                    }
+                } catch (error) {
+                    console.error('❌ Error en deleteRule Supabase:', error);
+                }
+            }
+
             console.log(`🗑️ Regla eliminada: ${ruleId}`);
         }
 
         return deleted;
+    }
+
+    /**
+     * Obtiene el ID de un banco por su código
+     */
+    async getBankIdByCode(bankCode) {
+        if (!this.supabaseClient) return null;
+
+        try {
+            const { data, error } = await this.supabaseClient.client
+                .from('banks')
+                .select('id')
+                .eq('code', bankCode)
+                .single();
+
+            if (error) {
+                console.error(`Error obteniendo ID de banco ${bankCode}:`, error);
+                return null;
+            }
+
+            return data?.id || null;
+        } catch (error) {
+            console.error(`Error en getBankIdByCode:`, error);
+            return null;
+        }
     }
 
     /**
@@ -620,7 +874,7 @@ class RulesManager {
     /**
      * Agrega nueva corrección
      */
-    addCorrection(bankName, correctionData) {
+    async addCorrection(bankName, correctionData) {
         const correction = {
             id: this.generateCorrectionId(bankName),
             pattern: correctionData.pattern,
@@ -634,6 +888,7 @@ class RulesManager {
             ...correctionData
         };
 
+        // Agregar a config local (caché)
         if (bankName === 'global') {
             this.config.descriptionCorrections.global.push(correction);
         } else {
@@ -646,6 +901,38 @@ class RulesManager {
         this.updateMetadata();
         this.saveConfig();
 
+        // Guardar en Supabase
+        if (this.supabaseClient) {
+            try {
+                const bankId = bankName !== 'global' ? await this.getBankIdByCode(bankName) : null;
+
+                const { data, error } = await this.supabaseClient.client
+                    .from('description_corrections')
+                    .insert({
+                        bank_id: bankId,
+                        correction_type: correction.type,
+                        pattern: correction.pattern,
+                        replacement: correction.replacement,
+                        case_insensitive: correction.caseInsensitive,
+                        description: correction.description,
+                        is_active: correction.active,
+                        created_by: correction.author
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error('❌ Error guardando corrección en Supabase:', error);
+                } else {
+                    // Actualizar ID local con el de Supabase
+                    correction.id = data.id;
+                    console.log(`✅ [SUPABASE] Corrección guardada con ID: ${data.id}`);
+                }
+            } catch (error) {
+                console.error('❌ Error en addCorrection Supabase:', error);
+            }
+        }
+
         console.log(`✅ Corrección agregada (${bankName}):`, correction.description);
         return correction;
     }
@@ -653,7 +940,7 @@ class RulesManager {
     /**
      * Actualiza corrección existente
      */
-    updateCorrection(correctionId, updates) {
+    async updateCorrection(correctionId, updates) {
         let updated = false;
 
         // Buscar en correcciones globales
@@ -679,6 +966,33 @@ class RulesManager {
         if (updated) {
             this.updateMetadata();
             this.saveConfig();
+
+            // Actualizar en Supabase
+            if (this.supabaseClient) {
+                try {
+                    const updateData = {};
+                    if (updates.type) updateData.correction_type = updates.type;
+                    if (updates.pattern) updateData.pattern = updates.pattern;
+                    if (updates.replacement) updateData.replacement = updates.replacement;
+                    if (updates.caseInsensitive !== undefined) updateData.case_insensitive = updates.caseInsensitive;
+                    if (updates.description) updateData.description = updates.description;
+                    if (updates.active !== undefined) updateData.is_active = updates.active;
+
+                    const { error } = await this.supabaseClient.client
+                        .from('description_corrections')
+                        .update(updateData)
+                        .eq('id', correctionId);
+
+                    if (error) {
+                        console.error('❌ Error actualizando corrección en Supabase:', error);
+                    } else {
+                        console.log(`✅ [SUPABASE] Corrección actualizada: ${correctionId}`);
+                    }
+                } catch (error) {
+                    console.error('❌ Error en updateCorrection Supabase:', error);
+                }
+            }
+
             console.log(`✅ Corrección actualizada: ${correctionId}`);
         }
 
@@ -688,7 +1002,7 @@ class RulesManager {
     /**
      * Elimina corrección
      */
-    deleteCorrection(correctionId) {
+    async deleteCorrection(correctionId) {
         let deleted = false;
 
         // Eliminar de correcciones globales
@@ -714,6 +1028,25 @@ class RulesManager {
         if (deleted) {
             this.updateMetadata();
             this.saveConfig();
+
+            // Eliminar de Supabase
+            if (this.supabaseClient) {
+                try {
+                    const { error } = await this.supabaseClient.client
+                        .from('description_corrections')
+                        .delete()
+                        .eq('id', correctionId);
+
+                    if (error) {
+                        console.error('❌ Error eliminando corrección en Supabase:', error);
+                    } else {
+                        console.log(`✅ [SUPABASE] Corrección eliminada: ${correctionId}`);
+                    }
+                } catch (error) {
+                    console.error('❌ Error en deleteCorrection Supabase:', error);
+                }
+            }
+
             console.log(`🗑️ Corrección eliminada: ${correctionId}`);
         }
 
@@ -926,12 +1259,12 @@ class RulesManager {
      */
     saveConfig() {
         try {
+            // Guardar caché local para fallback
             localStorage.setItem(this.storageKeys.config, JSON.stringify(this.config));
             localStorage.setItem(this.storageKeys.version, this.configVersion);
-            console.log('💾 Configuración guardada');
+            console.log('💾 Configuración guardada en caché local');
 
-            // TODO: Sync con servidor en futuro
-            // this.syncWithServer();
+            // Las reglas individuales se guardan en Supabase mediante addRule/updateRule/deleteRule
 
         } catch (error) {
             console.error('❌ Error guardando configuración:', error);
