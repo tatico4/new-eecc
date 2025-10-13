@@ -117,11 +117,12 @@ class RulesManager {
                 }
             };
 
-            // 1. Cargar reglas de filtrado globales
-            const { data: globalFilteringRules, error: error1 } = await this.supabaseClient.client
-                .from('filtering_rules')
+            // 1. Cargar reglas de filtrado globales desde categorization_rules
+            const { data: globalFilteringRules, error: error1 } = await this.supabaseClient.supabase
+                .from('categorization_rules')
                 .select('*')
                 .is('bank_id', null)
+                .in('rule_type', ['filter_line', 'filter_line_regex'])
                 .eq('is_active', true);
 
             if (error1) {
@@ -130,7 +131,7 @@ class RulesManager {
                 this.config.globalRules = (globalFilteringRules || []).map(rule => ({
                     id: rule.id,
                     type: rule.rule_type,
-                    text: rule.text_pattern,
+                    text: rule.pattern,  // En categorization_rules se llama 'pattern', no 'text_pattern'
                     description: rule.description,
                     active: rule.is_active,
                     created: rule.created_at,
@@ -140,7 +141,7 @@ class RulesManager {
             }
 
             // 2. Cargar reglas de filtrado por banco
-            const { data: banks, error: error2 } = await this.supabaseClient.client
+            const { data: banks, error: error2 } = await this.supabaseClient.supabase
                 .from('banks')
                 .select('id, code, name');
 
@@ -148,17 +149,18 @@ class RulesManager {
                 console.error('Error cargando bancos:', error2);
             } else {
                 for (const bank of banks || []) {
-                    const { data: bankRules, error: error3 } = await this.supabaseClient.client
-                        .from('filtering_rules')
+                    const { data: bankRules, error: error3 } = await this.supabaseClient.supabase
+                        .from('categorization_rules')
                         .select('*')
                         .eq('bank_id', bank.id)
+                        .in('rule_type', ['filter_line', 'filter_line_regex'])
                         .eq('is_active', true);
 
                     if (!error3 && bankRules && bankRules.length > 0) {
                         this.config.bankSpecificRules[bank.code] = bankRules.map(rule => ({
                             id: rule.id,
                             type: rule.rule_type,
-                            text: rule.text_pattern,
+                            text: rule.pattern,
                             description: rule.description,
                             active: rule.is_active,
                             created: rule.created_at,
@@ -172,7 +174,7 @@ class RulesManager {
             }
 
             // 3. Cargar correcciones globales
-            const { data: globalCorrections, error: error4 } = await this.supabaseClient.client
+            const { data: globalCorrections, error: error4 } = await this.supabaseClient.supabase
                 .from('description_corrections')
                 .select('*')
                 .is('bank_id', null)
@@ -197,7 +199,7 @@ class RulesManager {
 
             // 4. Cargar correcciones por banco
             for (const bank of banks || []) {
-                const { data: bankCorrections, error: error5 } = await this.supabaseClient.client
+                const { data: bankCorrections, error: error5 } = await this.supabaseClient.supabase
                     .from('description_corrections')
                     .select('*')
                     .eq('bank_id', bank.id)
@@ -675,14 +677,17 @@ class RulesManager {
 
         switch (rule.type) {
             case 'contains':
+            case 'filter_line':
                 return lowerText.includes(lowerRuleText);
             case 'starts':
                 return lowerText.startsWith(lowerRuleText);
             case 'ends':
                 return lowerText.endsWith(lowerRuleText);
             case 'exact':
+            case 'exact_match':
                 return lowerText.trim() === lowerRuleText;
             case 'regex':
+            case 'filter_line_regex':
                 try {
                     const regex = new RegExp(rule.text, 'i');
                     return regex.test(text);

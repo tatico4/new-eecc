@@ -411,7 +411,7 @@ class BancoFalabellaParser extends AbstractBankParser {
             .replace(/\s+/g, ' ')              // Normalizar espacios
             .trim();
 
-        // PRIMERA VERIFICACIÓN: Usar RulesManager si está disponible
+        // PRIMERA VERIFICACIÓN: Usar RulesManager si está disponible (reglas administrables desde Supabase)
         if (this.rulesManager) {
             const ruleResult = this.rulesManager.shouldFilterLine(line, 'BancoFalabella');
             if (ruleResult.shouldFilter) {
@@ -420,31 +420,7 @@ class BancoFalabellaParser extends AbstractBankParser {
             }
         }
 
-        // VERIFICACIÓN PRIORITARIA: Keywords críticos de metadata (más agresivo)
-        // Estos deben verificarse ANTES de regex para evitar problemas de encoding
-        const criticalMetadataKeywords = [
-            'pagar hasta',
-            'proximo periodo',
-            'periodo a facturar',
-            'cae',
-            'tasa interes',
-            'cmr puntos',
-            'puntos acumulados',
-            'puntos por vencer',
-            'cupo total',
-            'cupo disponible',
-            'monto total facturado',
-            'monto minimo'
-        ];
-
-        for (const keyword of criticalMetadataKeywords) {
-            if (normalizedLine.includes(keyword)) {
-                console.log(`⚠️ [FALABELLA CRITICAL FILTER] Línea saltada (metadata crítico): "${line}"`);
-                return true;
-            }
-        }
-
-        // SEGUNDA VERIFICACIÓN: Filtros básicos incorporados
+        // SEGUNDA VERIFICACIÓN: Filtros básicos incorporados (backup/fallback)
         const skipPatterns = [
             // Encabezados y títulos
             /^\s*(movimientos|transacciones|fecha|descripción|monto|saldo)/i,
