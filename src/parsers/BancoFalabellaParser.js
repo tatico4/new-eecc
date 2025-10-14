@@ -785,6 +785,15 @@ class BancoFalabellaParser extends AbstractBankParser {
             console.log(`💳 [CREDIT LIMIT] Encontrado: "${creditLimitStr}" → ${creditLimit}`);
         }
 
+        // Buscar nombre del titular
+        const holderPattern = /nombre\s+del\s+titular\s*:?\s*([A-ZÁÉÍÓÚÑ\s\.]+)/i;
+        const holderMatch = text.match(holderPattern);
+
+        if (holderMatch) {
+            additionalData.accountHolder = holderMatch[1].trim();
+            console.log(`👤 [TITULAR] ${additionalData.accountHolder}`);
+        }
+
         console.log('📊 [ADDITIONAL DATA] Datos extraídos:', additionalData);
         return additionalData;
     }

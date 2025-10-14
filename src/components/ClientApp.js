@@ -807,8 +807,24 @@ class ClientApp {
      */
     renderTarjetaCreditoDashboard() {
         const stats = this.calculateStats();
+        const accountHolder = this.getAccountHolder();
 
         document.getElementById('summaryCards').innerHTML = `
+            ${accountHolder ? `
+                <!-- Mensaje de bienvenida personalizado -->
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg p-4 mb-6 text-white shadow-lg">
+                    <div class="flex items-center">
+                        <div class="bg-white/20 rounded-full p-2 mr-3">
+                            <span class="text-2xl">👋</span>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold">Hola, ${accountHolder}</h2>
+                            <p class="text-sm text-white/90">Nos avisas si Te Cuadra</p>
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Sección: Período Anterior -->
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -881,11 +897,27 @@ class ClientApp {
     renderCuentaCorrienteDashboard() {
         const cuentaData = this.lastParseResult || {};
         const stats = this.calculateStats();
+        const accountHolder = this.getAccountHolder();
 
         // Calcular mayor gasto por categoría
         const mayorGasto = this.calculateMayorGastoPorCategoria();
 
         document.getElementById('summaryCards').innerHTML = `
+            ${accountHolder ? `
+                <!-- Mensaje de bienvenida personalizado -->
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg p-4 mb-6 text-white shadow-lg">
+                    <div class="flex items-center">
+                        <div class="bg-white/20 rounded-full p-2 mr-3">
+                            <span class="text-2xl">👋</span>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold">Hola, ${accountHolder}</h2>
+                            <p class="text-sm text-white/90">Nos avisas si Te Cuadra</p>
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+
             <!-- Mi resumen del mes -->
             <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <div class="flex items-center mb-4">
@@ -1190,6 +1222,16 @@ class ClientApp {
             }
         }
         return 0; // Default si no se encuentra
+    }
+
+    /**
+     * Obtiene el nombre del titular de la cuenta desde el parser
+     */
+    getAccountHolder() {
+        if (this.lastParseResult && this.lastParseResult.accountHolder) {
+            return this.lastParseResult.accountHolder;
+        }
+        return null;
     }
 
     /**

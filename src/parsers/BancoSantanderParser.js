@@ -562,10 +562,11 @@ class BancoSantanderParser extends AbstractBankParser {
                 additionalData.numeroTarjeta = `****-****-****-${tarjetaMatch[1]}`;
             }
 
-            // Extraer titular
-            const titularMatch = text.match(/NOMBRE DEL TITULAR\s+([A-Z\s]+)/);
+            // Extraer titular (account holder)
+            const titularMatch = text.match(/NOMBRE DEL TITULAR\s+([A-ZÁÉÍÓÚÑ\s\.]+)/i);
             if (titularMatch) {
-                additionalData.titular = titularMatch[1].trim();
+                additionalData.accountHolder = titularMatch[1].trim();
+                console.log(`👤 [TITULAR] ${additionalData.accountHolder}`);
             }
 
         } catch (error) {

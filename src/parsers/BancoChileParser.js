@@ -145,13 +145,42 @@ class BancoChileParser extends AbstractBankParser {
             return null;
         }
 
+        // 6. Determinar tipo de transacción (payment vs purchase)
+        // En Banco de Chile: montos negativos = pagos/abonos, montos positivos = gastos
+        const isPayment = amount < 0 || this.isPaymentTransaction(description);
+        const transactionType = isPayment ? 'payment' : 'purchase';
+
+        // 7. Ajustar el signo del monto según el tipo
+        // Para pagos: convertir a positivo (ej: -70113 -> 70113)
+        // Para gastos: convertir a negativo (ej: 3990 -> -3990)
+        const finalAmount = isPayment ? Math.abs(amount) : -Math.abs(amount);
+
+        console.log(`🔍 [TIPO] "${description}" → ${transactionType} (monto original: ${amount}, final: ${finalAmount})`);
+
         return {
             date: formattedDate,
             description: description,
-            amount: amount,
+            amount: finalAmount,
+            type: transactionType,
             rawLine: line,
             confidence: 0.90
         };
+    }
+
+    /**
+     * Determina si una transacción es un pago/abono basándose en la descripción
+     */
+    isPaymentTransaction(description) {
+        const paymentKeywords = [
+            'pago',
+            'abono',
+            'transferencia',
+            'deposito',
+            'depósito'
+        ];
+
+        const lowerDesc = description.toLowerCase();
+        return paymentKeywords.some(keyword => lowerDesc.includes(keyword));
     }
 
     /**
@@ -354,6 +383,55 @@ class BancoChileParser extends AbstractBankParser {
         if (cardMatch) {
             additionalData.cardNumber = cardMatch[1].trim();
             console.log(`💳 [TARJETA] ${additionalData.cardNumber}`);
+        }
+
+        // 5. Buscar nombre del titular (patrón más flexible)
+        console.log('🔍 [TITULAR DEBUG] Buscando nombre del titular en el texto...');
+
+        // Buscar contexto alrededor de "titular" o "nombre"
+        const contextMatch = text.match(/.{0,200}titular.{0,200}/i);
+        if (contextMatch) {
+            console.log(`📋 [TITULAR DEBUG] Contexto encontrado: "${contextMatch[0]}"`);
+        }
+
+        // Patrón 1: "NOMBRE DEL TITULAR" seguido del nombre
+        const holderPattern1 = /nombre[\s\n]+del[\s\n]+titular[\s\n:]+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s\.]+?)(?=\n|$|[A-Z]{5,}|N[°º])/i;
+        const holderMatch1 = text.match(holderPattern1);
+
+        if (holderMatch1) {
+            additionalData.accountHolder = holderMatch1[1].trim();
+            console.log(`👤 [TITULAR] ${additionalData.accountHolder}`);
+        } else {
+            // Patrón 2: Buscar línea que contenga nombre típico chileno (NOMBRE APELLIDO APELLIDO)
+            const namePattern = /([A-ZÁÉÍÓÚÑ]+\s+[A-ZÁÉÍÓÚÑ]+\.?\s+[A-ZÁÉÍÓÚÑ]+)/;
+            const lines = text.split('\n');
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                // Buscar línea con "TITULAR" y luego extraer el nombre
+                if (line.toLowerCase().includes('titular')) {
+                    console.log(`🔍 [TITULAR DEBUG] Línea con 'titular': "${line}"`);
+
+                    // Buscar nombre en la misma línea o en las siguientes
+                    for (let j = i; j < Math.min(i + 3, lines.length); j++) {
+                        const nameLine = lines[j].trim();
+                        const nameMatch = nameLine.match(namePattern);
+                        if (nameMatch && !nameLine.toLowerCase().includes('banco') &&
+                            !nameLine.toLowerCase().includes('tarjeta') &&
+                            nameLine.length < 100) {
+                            additionalData.accountHolder = nameMatch[1].trim();
+                            console.log(`👤 [TITULAR - PATTERN2] ${additionalData.accountHolder}`);
+                            break;
+                        }
+                    }
+                    if (additionalData.accountHolder) break;
+                }
+            }
+
+            if (!additionalData.accountHolder) {
+                console.warn('⚠️ [TITULAR] No se pudo extraer el nombre del titular');
+                console.warn('📋 [TITULAR] Primeras 500 caracteres del texto:', text.substring(0, 500));
+            }
         }
 
         console.log('✅ [ADDITIONAL DATA] Datos adicionales extraídos:', additionalData);
