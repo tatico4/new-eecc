@@ -121,13 +121,19 @@
                     <i class="fas fa-check-circle text-2xl text-indigo-600"></i>
                     <span class="font-bold text-xl text-gray-900">TeCuadra</span>
                 </div>
-                <div class="hidden md:flex items-center space-x-8">
+                <div id="navLinks" class="hidden md:flex items-center space-x-8">
                     <a href="#beneficios" class="text-gray-700 hover:text-indigo-600 transition-colors">Beneficios</a>
                     <a href="#como-funciona" class="text-gray-700 hover:text-indigo-600 transition-colors">¿Cómo funciona?</a>
                     <a href="#seguridad" class="text-gray-700 hover:text-indigo-600 transition-colors">Seguridad</a>
                     <a href="#" onclick="startAnalysis()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
                         Comenzar Gratis
                     </a>
+                </div>
+                <div id="navAppButtons" class="hidden md:flex items-center space-x-4">
+                    <button onclick="window.location.reload()" class="text-gray-700 hover:text-indigo-600 transition-colors flex items-center">
+                        <i class="fas fa-redo mr-2"></i>
+                        Nueva Consulta
+                    </button>
                 </div>
                 <div class="md:hidden">
                     <button id="mobile-menu-toggle" class="text-gray-700">
@@ -751,8 +757,11 @@
 
         // Función para mostrar la sección de la app
         function showAppSection() {
+            // Ocultar enlaces del nav y mostrar botones de app
+            document.getElementById('navLinks').style.display = 'none';
+            document.getElementById('navAppButtons').style.display = 'flex';
+
             // Ocultar landing page
-            document.querySelector('body > nav').style.display = 'none';
             const sections = ['section', 'footer'];
             sections.forEach(section => {
                 const elements = document.querySelectorAll(section);
@@ -778,8 +787,11 @@
 
         // Función para volver al landing
         function showLanding() {
+            // Mostrar enlaces del nav y ocultar botones de app
+            document.getElementById('navLinks').style.display = 'flex';
+            document.getElementById('navAppButtons').style.display = 'none';
+
             // Mostrar landing page
-            document.querySelector('body > nav').style.display = 'block';
             const sections = ['section', 'footer'];
             sections.forEach(section => {
                 const elements = document.querySelectorAll(section);
