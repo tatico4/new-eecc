@@ -292,6 +292,75 @@ class BancoChileParser extends AbstractBankParser {
     }
 
     /**
+     * Extrae datos adicionales específicos del PDF de Banco de Chile
+     */
+    extractAdditionalData(text) {
+        console.log('📄 [ADDITIONAL DATA] Extrayendo datos adicionales de Banco de Chile...');
+
+        const additionalData = {};
+
+        // 1. Buscar "MONTO FACTURADO A PAGAR (PERÍODO ANTERIOR)"
+        const billedAmountPattern = /monto\s+facturado\s+a\s+pagar\s*\(?\s*per[ií]odo\s+anterior\s*\)?[\s\S]*?\$?\s*(\d{1,3}(?:\.\d{3})*)/i;
+        const billedMatch = text.match(billedAmountPattern);
+
+        if (billedMatch) {
+            const billedAmountStr = billedMatch[1];
+            const billedAmount = parseInt(billedAmountStr.replace(/\./g, ''), 10);
+            additionalData.billedAmount = billedAmount;
+            console.log(`💰 [MONTO FACTURADO] Encontrado: $${billedAmountStr} → ${billedAmount}`);
+        } else {
+            console.warn('⚠️ [MONTO FACTURADO] No se encontró el monto facturado a pagar');
+        }
+
+        // 2. Buscar "PAGAR HASTA" (fecha de vencimiento)
+        const dueDatePattern = /pagar\s+hasta\s+(\d{1,2}\/\d{1,2}\/\d{4})/i;
+        const dueDateMatch = text.match(dueDatePattern);
+
+        if (dueDateMatch) {
+            const dueDateStr = dueDateMatch[1];
+            try {
+                const formattedDueDate = this.formatDateBancoChile(dueDateStr);
+                additionalData.dueDate = formattedDueDate;
+                console.log(`📅 [FECHA VENCIMIENTO] Encontrada: ${dueDateStr} → ${formattedDueDate}`);
+            } catch (error) {
+                console.warn(`⚠️ [FECHA VENCIMIENTO] Error parseando fecha: ${dueDateStr}`, error);
+            }
+        }
+
+        // 3. Buscar "PERÍODO FACTURADO"
+        const periodPattern = /per[ií]odo\s+facturado\s+(\d{1,2}\/\d{1,2}\/\d{4})\s+(\d{1,2}\/\d{1,2}\/\d{4})/i;
+        const periodMatch = text.match(periodPattern);
+
+        if (periodMatch) {
+            const periodStartStr = periodMatch[1];
+            const periodEndStr = periodMatch[2];
+            try {
+                const periodStart = this.formatDateBancoChile(periodStartStr);
+                const periodEnd = this.formatDateBancoChile(periodEndStr);
+                additionalData.billingPeriod = {
+                    start: periodStart,
+                    end: periodEnd
+                };
+                console.log(`📆 [PERÍODO] ${periodStartStr} - ${periodEndStr}`);
+            } catch (error) {
+                console.warn('⚠️ [PERÍODO] Error parseando fechas del período', error);
+            }
+        }
+
+        // 4. Buscar información de la tarjeta
+        const cardPattern = /n[°º]\s+de\s+tarjeta\s+de\s+cr[ée]dito\s+([\dX\s]+)/i;
+        const cardMatch = text.match(cardPattern);
+
+        if (cardMatch) {
+            additionalData.cardNumber = cardMatch[1].trim();
+            console.log(`💳 [TARJETA] ${additionalData.cardNumber}`);
+        }
+
+        console.log('✅ [ADDITIONAL DATA] Datos adicionales extraídos:', additionalData);
+        return additionalData;
+    }
+
+    /**
      * Testing del parser
      */
     static runTests() {
