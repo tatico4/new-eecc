@@ -5,13 +5,31 @@
 class BancoChileParser extends AbstractBankParser {
     constructor() {
         super();
-        this.rulesManager = window.RulesManager || null;
 
         // Ubicaciones comunes en estados de cuenta Banco de Chile
         this.UBICACIONES = [
             'SANTIAGO', 'CL', 'PROVIDENCIA', 'LAS CONDES', 'VITACURA',
             'LA FLORIDA', 'MAIPU', 'ÑUÑOA', 'HUECHURABA', 'LA REINA'
         ];
+
+        // Inicializar RulesManager si está disponible
+        this.rulesManager = null;
+        this.initializeRulesManager();
+    }
+
+    /**
+     * Inicializa RulesManager de forma asíncrona
+     */
+    async initializeRulesManager() {
+        try {
+            if (typeof RulesManager !== 'undefined') {
+                this.rulesManager = RulesManager.getInstance();
+                await this.rulesManager.init();
+                console.log('✅ RulesManager integrado con BancoChileParser');
+            }
+        } catch (error) {
+            console.warn('⚠️ No se pudo inicializar RulesManager en BancoChileParser:', error);
+        }
     }
 
     /**
@@ -200,8 +218,8 @@ class BancoChileParser extends AbstractBankParser {
      */
     shouldSkipLine(line) {
         // Usar RulesManager si está disponible
-        if (this.rulesManager) {
-            const ruleResult = this.rulesManager.shouldFilterLine(line, 'BancoChile');
+        if (this.rulesManager && typeof this.rulesManager.shouldFilterLine === 'function') {
+            const ruleResult = this.rulesManager.shouldFilterLine(line, 'BANCOCHILE');
             if (ruleResult.shouldFilter) {
                 console.log(`🎯 [RULES MANAGER] Línea filtrada: "${line}"`);
                 return true;
