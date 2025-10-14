@@ -385,53 +385,34 @@ class BancoChileParser extends AbstractBankParser {
             console.log(`💳 [TARJETA] ${additionalData.cardNumber}`);
         }
 
-        // 5. Buscar nombre del titular (patrón más flexible)
+        // 5. Buscar nombre del titular
         console.log('🔍 [TITULAR DEBUG] Buscando nombre del titular en el texto...');
 
-        // Buscar contexto alrededor de "titular" o "nombre"
-        const contextMatch = text.match(/.{0,200}titular.{0,200}/i);
-        if (contextMatch) {
-            console.log(`📋 [TITULAR DEBUG] Contexto encontrado: "${contextMatch[0]}"`);
-        }
+        // Buscar la línea específica "NOMBRE DEL TITULAR FRANCISCO A. BRAVO"
+        const lines = text.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
 
-        // Patrón 1: "NOMBRE DEL TITULAR" seguido del nombre
-        const holderPattern1 = /nombre[\s\n]+del[\s\n]+titular[\s\n:]+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s\.]+?)(?=\n|$|[A-Z]{5,}|N[°º])/i;
-        const holderMatch1 = text.match(holderPattern1);
+            // Buscar línea que contenga "NOMBRE DEL TITULAR"
+            if (line.toUpperCase().includes('NOMBRE DEL TITULAR')) {
+                console.log(`🔍 [TITULAR DEBUG] Línea encontrada: "${line}"`);
 
-        if (holderMatch1) {
-            additionalData.accountHolder = holderMatch1[1].trim();
-            console.log(`👤 [TITULAR] ${additionalData.accountHolder}`);
-        } else {
-            // Patrón 2: Buscar línea que contenga nombre típico chileno (NOMBRE APELLIDO APELLIDO)
-            const namePattern = /([A-ZÁÉÍÓÚÑ]+\s+[A-ZÁÉÍÓÚÑ]+\.?\s+[A-ZÁÉÍÓÚÑ]+)/;
-            const lines = text.split('\n');
+                // Extraer el nombre después de "TITULAR"
+                // Capturar todo después de "TITULAR" hasta el final de la línea
+                const nameMatch = line.match(/TITULAR\s+(.+)$/i);
 
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                // Buscar línea con "TITULAR" y luego extraer el nombre
-                if (line.toLowerCase().includes('titular')) {
-                    console.log(`🔍 [TITULAR DEBUG] Línea con 'titular': "${line}"`);
-
-                    // Buscar nombre en la misma línea o en las siguientes
-                    for (let j = i; j < Math.min(i + 3, lines.length); j++) {
-                        const nameLine = lines[j].trim();
-                        const nameMatch = nameLine.match(namePattern);
-                        if (nameMatch && !nameLine.toLowerCase().includes('banco') &&
-                            !nameLine.toLowerCase().includes('tarjeta') &&
-                            nameLine.length < 100) {
-                            additionalData.accountHolder = nameMatch[1].trim();
-                            console.log(`👤 [TITULAR - PATTERN2] ${additionalData.accountHolder}`);
-                            break;
-                        }
-                    }
-                    if (additionalData.accountHolder) break;
+                if (nameMatch) {
+                    additionalData.accountHolder = nameMatch[1].trim();
+                    console.log(`👤 [TITULAR] ${additionalData.accountHolder}`);
+                    break;
                 }
             }
+        }
 
-            if (!additionalData.accountHolder) {
-                console.warn('⚠️ [TITULAR] No se pudo extraer el nombre del titular');
-                console.warn('📋 [TITULAR] Primeras 500 caracteres del texto:', text.substring(0, 500));
-            }
+        if (!additionalData.accountHolder) {
+            console.warn('⚠️ [TITULAR] No se pudo extraer el nombre del titular');
+            console.warn('📋 [TITULAR] Líneas con "titular":',
+                lines.filter(l => l.toLowerCase().includes('titular')).slice(0, 3));
         }
 
         console.log('✅ [ADDITIONAL DATA] Datos adicionales extraídos:', additionalData);
