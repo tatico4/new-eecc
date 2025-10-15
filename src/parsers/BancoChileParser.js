@@ -84,7 +84,15 @@ class BancoChileParser extends AbstractBankParser {
             return null;
         }
 
-        // 2. Buscar patrón de fecha DD/MM/YY
+        // 2. Filtrar líneas de metadata de pago (ej: "08/09/2025 $ 39.735 08/09/2025 $ 39.735")
+        // Estas líneas tienen la fecha repetida dos veces con el mismo monto
+        const duplicateDatePattern = /^(\d{1,2}\/\d{1,2}\/\d{4})\s+\$\s*[\d\.\,\-]+\s+\1\s+\$/;
+        if (duplicateDatePattern.test(line)) {
+            console.log(`⚠️ [FILTER] Línea filtrada (fecha duplicada - metadata): "${line}"`);
+            return null;
+        }
+
+        // 3. Buscar patrón de fecha DD/MM/YY
         const dateMatch = line.match(/(\d{1,2}\/\d{1,2}\/\d{2,4})/);
         if (!dateMatch) {
             return null;
@@ -93,7 +101,18 @@ class BancoChileParser extends AbstractBankParser {
         const rawDate = dateMatch[1];
         const dateIndex = line.indexOf(rawDate);
 
-        // 3. Extraer el monto (último valor después de $)
+        // 4. Las transacciones reales deben tener un código de referencia de 12 dígitos
+        // O ser de un lugar conocido (SANTIAGO, CL, etc.)
+        const afterDate = line.substring(dateIndex + rawDate.length).trim();
+        const hasRefCode = /^\d{12}/.test(afterDate);
+        const hasLocation = /^(SANTIAGO|CL|PROVIDENCIA|LAS CONDES|VITACURA|LA FLORIDA|MAIPU|ÑUÑOA|HUECHURABA)/i.test(line);
+
+        if (!hasRefCode && !hasLocation) {
+            console.log(`⚠️ [FILTER] Línea filtrada (sin código de referencia ni ubicación): "${line}"`);
+            return null;
+        }
+
+        // 5. Extraer el monto (último valor después de $)
         // Patrón: $ seguido de número con puntos como separador de miles, puede ser negativo
         const amountMatches = line.match(/\$\s*(-?\d{1,3}(?:\.\d{3})*(?:,\d{2})?)/g);
         if (!amountMatches || amountMatches.length === 0) {
@@ -108,9 +127,9 @@ class BancoChileParser extends AbstractBankParser {
             return null;
         }
 
-        // 4. Extraer descripción (después de código de referencia, antes del primer monto)
+        // 6. Extraer descripción (después de código de referencia, antes del primer monto)
         // La descripción está entre la fecha+código y el primer $
-        const afterDate = line.substring(dateIndex + rawDate.length).trim();
+        // (afterDate ya fue definido anteriormente)
 
         // Buscar el código de referencia (12 dígitos después de la fecha)
         const codeMatch = afterDate.match(/^(\d{12})\s+(.+?)\s*\$/);
@@ -136,7 +155,7 @@ class BancoChileParser extends AbstractBankParser {
             description = 'Transacción';
         }
 
-        // 5. Formatear fecha (convertir DD/MM/YY a YYYY-MM-DD)
+        // 7. Formatear fecha (convertir DD/MM/YY a YYYY-MM-DD)
         let formattedDate;
         try {
             formattedDate = this.formatDateBancoChile(rawDate);
@@ -145,12 +164,12 @@ class BancoChileParser extends AbstractBankParser {
             return null;
         }
 
-        // 6. Determinar tipo de transacción (payment vs purchase)
+        // 8. Determinar tipo de transacción (payment vs purchase)
         // En Banco de Chile: montos negativos = pagos/abonos, montos positivos = gastos
         const isPayment = amount < 0 || this.isPaymentTransaction(description);
         const transactionType = isPayment ? 'payment' : 'purchase';
 
-        // 7. Ajustar el signo del monto según el tipo
+        // 9. Ajustar el signo del monto según el tipo
         // Para pagos: convertir a positivo (ej: -70113 -> 70113)
         // Para gastos: convertir a negativo (ej: 3990 -> -3990)
         const finalAmount = isPayment ? Math.abs(amount) : -Math.abs(amount);
