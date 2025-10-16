@@ -786,12 +786,30 @@ class BancoFalabellaParser extends AbstractBankParser {
         }
 
         // Buscar nombre del titular
-        const holderPattern = /nombre\s+del\s+titular\s*:?\s*([A-ZÁÉÍÓÚÑ\s\.]+)/i;
-        const holderMatch = text.match(holderPattern);
+        console.log('🔍 [TITULAR DEBUG] Buscando nombre del titular en Falabella...');
 
-        if (holderMatch) {
-            additionalData.accountHolder = holderMatch[1].trim();
-            console.log(`👤 [TITULAR] ${additionalData.accountHolder}`);
+        const lines = text.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+
+            // Buscar línea que contenga "NOMBRE DEL TITULAR"
+            if (line.toUpperCase().includes('NOMBRE DEL TITULAR')) {
+                console.log(`🔍 [TITULAR DEBUG] Línea encontrada: "${line}"`);
+
+                // Extraer el nombre después de "TITULAR"
+                // Capturar 2-4 palabras después de "TITULAR" (nombre típico chileno)
+                const nameMatch = line.match(/TITULAR\s*:?\s*([A-ZÁÉÍÓÚÑ]+(?:\s+[A-ZÁÉÍÓÚÑ]+){1,3})/i);
+
+                if (nameMatch) {
+                    additionalData.accountHolder = nameMatch[1].trim();
+                    console.log(`👤 [TITULAR] ${additionalData.accountHolder}`);
+                    break;
+                }
+            }
+        }
+
+        if (!additionalData.accountHolder) {
+            console.warn('⚠️ [TITULAR] No se pudo extraer el nombre del titular en Falabella');
         }
 
         console.log('📊 [ADDITIONAL DATA] Datos extraídos:', additionalData);

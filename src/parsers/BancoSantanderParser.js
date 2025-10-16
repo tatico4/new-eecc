@@ -563,10 +563,13 @@ class BancoSantanderParser extends AbstractBankParser {
             }
 
             // Extraer titular (account holder)
-            const titularMatch = text.match(/NOMBRE DEL TITULAR\s+([A-ZÁÉÍÓÚÑ\s\.]+)/i);
+            // Capturar 2-4 palabras después de "TITULAR" (nombre típico chileno)
+            const titularMatch = text.match(/NOMBRE\s+DEL\s+TITULAR\s+([A-ZÁÉÍÓÚÑ]+(?:\s+[A-ZÁÉÍÓÚÑ]+){1,3})/i);
             if (titularMatch) {
                 additionalData.accountHolder = titularMatch[1].trim();
                 console.log(`👤 [TITULAR] ${additionalData.accountHolder}`);
+            } else {
+                console.warn('⚠️ [TITULAR] No se pudo extraer el nombre del titular en Santander');
             }
 
         } catch (error) {
