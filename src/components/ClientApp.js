@@ -1112,26 +1112,35 @@ class ClientApp {
         const isFullyPaid = difference >= 0;
         const percentagePaid = stats.billedAmount > 0 ? Math.round((stats.totalPaid / stats.billedAmount) * 100) : 0;
 
-        let statusColor, statusIcon, statusText;
+        let statusColor, statusIcon, statusText, explanationText;
 
         if (isFullyPaid) {
             statusColor = 'green';
             statusIcon = '✅';
             statusText = difference === 0 ? 'Pagado al día' : `Sobrepago +$${difference.toLocaleString('es-CL')}`;
+            explanationText = difference === 0
+                ? null
+                : '💡 Pagaste más de lo facturado el mes anterior, todo lo adicional rebajará tu deuda del próximo mes.';
         } else {
             statusColor = 'yellow';
             statusIcon = '⚠️';
             statusText = `Pendiente $${Math.abs(difference).toLocaleString('es-CL')}`;
+            explanationText = null;
         }
 
         return `
-            <div class="bg-white p-2 rounded-lg border border-blue-100">
-                <div class="flex items-center justify-between">
+            <div class="bg-white p-3 rounded-lg border border-blue-100">
+                <div class="flex items-center justify-between mb-2">
                     <span class="text-sm mr-2">${statusIcon}</span>
                     <div class="text-xs">
                         <span class="font-medium text-${statusColor}-800">${statusText}</span>
                     </div>
                 </div>
+                ${explanationText ? `
+                    <div class="text-xs text-gray-600 leading-relaxed bg-blue-50 p-2 rounded border-l-2 border-blue-400">
+                        ${explanationText}
+                    </div>
+                ` : ''}
             </div>
         `;
     }
@@ -1152,7 +1161,7 @@ class ClientApp {
             statusText = difference === 0 ? 'Pagado Completamente' : 'Sobrepago';
             statusDetail = difference === 0
                 ? 'Has pagado exactamente lo facturado'
-                : `Pagaste $${difference.toLocaleString('es-CL')} de más`;
+                : `Pagaste $${difference.toLocaleString('es-CL')} de más. Todo lo adicional rebajará tu deuda del próximo mes.`;
         } else {
             statusColor = 'yellow';
             statusIcon = '⚠️';
